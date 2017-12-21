@@ -824,7 +824,12 @@ namespace RaidBot.Entities {
             {799, "guzzlord"},
             {800, "necrozma"},
             {801, "magearna"},
-            {802, "marshadow"}
+            {802, "marshadow"},
+            {10000, "level1"},
+            {10001, "level2"},
+            {10002, "level3"},
+            {10003, "level4"},
+            {10004, "level5"}
          };
       }
    }

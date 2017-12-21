@@ -182,8 +182,9 @@ namespace RaidBot.BusinessLogic.Raids {
          }
 
          raidTime = raidTime.Replace(".", ":").Replace(",", ":").Replace(";", ":");
+         string[] colonFix = new string[] {"H:mm","HHmm","Hmm"}; //Array created in order to sanitize time formats, even those without colons.
          DateTime time;
-         if (DateTime.TryParseExact(raidTime, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) {
+         if (DateTime.TryParseExact(raidTime, colonFix, CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) {
             if (time > DateTime.Now.AddHours(_permissions.TimeZone)) {
                Raid raid = new Raid() {
                   Name = raidName,

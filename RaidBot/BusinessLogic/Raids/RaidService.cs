@@ -204,7 +204,7 @@ namespace RaidBot.BusinessLogic.Raids {
                      x.Value = raid.ToString();
                      x.IsInline = false;
                   });
-                  result.RequesterUserBuilder.WithThumbnailUrl($"https://raw.githubusercontent.com/kvangent/PokeAlarm/master/icons/{id}.png");
+                  result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL,id));
                }
                else {
                   result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
@@ -378,7 +378,7 @@ namespace RaidBot.BusinessLogic.Raids {
 
             result.Success = true;
             result.RequesterUserBuilder = EmbedBuilderHelper.BlueBuilder();
-            result.RequesterUserBuilder.WithThumbnailUrl($"https://raw.githubusercontent.com/kvangent/PokeAlarm/master/icons/{raid.RaidBossId}.png");
+            result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL, raid.RaidBossId));
             result.RequesterUserBuilder.AddField(x => {
                x.Name = $"Raid: {raid.ToString()}";
                x.Value = raid.ToStringUsers();

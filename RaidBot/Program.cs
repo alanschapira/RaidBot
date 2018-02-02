@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using System.Globalization;
 using Discord.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -26,9 +22,9 @@ namespace RaidBot {
          });
          _commandService = new CommandService();
 #if DEBUG
-         string token = "debug bot token goes here";
+         string token = ConfigVariables.DebugToken;
 #else
-         string token = "release bot token goes here";
+         string token = ConfigVariables.ReleaseToken;
 #endif
 
          _services = new ServiceCollection()

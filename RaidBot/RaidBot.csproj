@@ -176,6 +176,7 @@
     <Compile Include="Entities\ServerSettings.cs" />
     <Compile Include="Entities\Mons.cs" />
     <Compile Include="Entities\User.cs" />
+    <Compile Include="Helpers\ConfigVariables.cs" />
     <Compile Include="Helpers\EmbedBuilderHelper.cs" />
     <Compile Include="Helpers\JsonHelper.cs" />
     <Compile Include="Helpers\ModuleResult.cs" />
@@ -185,6 +186,7 @@
     <Compile Include="BusinessLogic\Raids\RaidService.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config.example" />
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>

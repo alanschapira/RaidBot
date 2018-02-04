@@ -18,7 +18,7 @@ namespace RaidBot.BusinessLogic.RaidStorage {
          var json = _blockBlob.DownloadText();
          List<Raid> raids = JsonConvert.DeserializeObject<List<Raid>>(json);
 
-         var aliveRaids = raids.Where(a => a.Time.AddMinutes(_serverSettings.AutoDeleteRaid) > DateTime.Now.AddHours(_serverSettings.TimeZone));
+         var aliveRaids = raids.Where(a => a.Time?.AddMinutes(_serverSettings.AutoDeleteRaid) > DateTime.Now.AddHours(_serverSettings.TimeZone));
          if (_serverSettings.JoinRaidOnCreate) {
             aliveRaids = aliveRaids.Where(a => a.Users.Count() > 0);
          }

@@ -24,11 +24,12 @@ namespace RaidBot.BusinessLogic.Modules {
 
       [Command("create"), Summary("Creates a Raid")]
       [Alias("add", "new")]
-      public async Task Create([Summary("The name of the raid to create")] string raidName, [Summary("The time of the raid")] string raidTime, [Summary("The name or id of the raid boss")]string raidBoss, [Summary("The number of guests to add to the initial attendee (if autojoin is set to on)")]int guests = 0) {
+      public async Task Create(
+         [Summary("The name of the raid to create")] string raidName) {
          var user = Context.User as IGuildUser;
 
          if (await CheckPermission(user, _serverPermissions)) {
-            var result = _raidService.CreateRaid(raidName, raidTime, raidBoss, Context.User, guests);
+            var result = _raidService.CreateRaid(raidName, Context.User);
 
             if (result.Success) {
                await ReplyAsync("", false, result.RequesterUserBuilder.Build());

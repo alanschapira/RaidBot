@@ -10,7 +10,7 @@ namespace RaidBot.Entities {
    [Serializable]
    public class Raid : IEquatable<Raid> {
       public string Name { get; set; }
-      public DateTime Time { get; set; }
+      public DateTime? Time { get; set; }
       public List<User> Users { get; set; }
 
       public DateTime CreateDateTime { get; set; }
@@ -29,7 +29,9 @@ namespace RaidBot.Entities {
       }
 
       public override string ToString() {
-         return $"{Name} {Time.ToString("HH:mm")} {Mons.GetNameById(RaidBossId)} ({UserCount} Attendees)";
+         string time = Time?.ToString("HH:mm");
+         string raidBoss = RaidBossId == 0 ? string.Empty : Mons.GetNameById(RaidBossId);
+         return $"{Name} {time} {raidBoss} ({UserCount} Attendees)";
       }
 
       public string ToStringUsers() {

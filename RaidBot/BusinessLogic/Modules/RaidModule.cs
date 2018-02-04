@@ -41,6 +41,24 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
+      [Command("pokemon"), Summary("Chooses the pokemon")]
+      [Alias("boss", "raidboss")]
+      public async Task RaidBoss([Summary("The name of the raid to join")] string raidName, [Summary("The name or id of the pokemon")] string pokemonName) {
+         var user = Context.User as IGuildUser;
+
+         if (await CheckPermission(user, _serverPermissions)) {
+            var result = _raidService.AddPokemon(raidName, pokemonName, user);
+
+            if (result.Success) {
+               await ReplyAsync("", false, result.RequesterUserBuilder.Build());
+            }
+            else {
+               var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
+               await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+            }
+         }
+      }
+
       [Command("get"), Summary("Get a list of all raids")]
       [Alias("info", "raids")]
       public async Task Get() {

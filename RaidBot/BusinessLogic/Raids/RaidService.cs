@@ -86,6 +86,61 @@ namespace RaidBot.BusinessLogic.Raids {
          return result;
       }
 
+      public ModuleResult AddPokemon(string raidName, string raidBoss, IGuildUser user) {
+         var result = new ModuleResult();
+         string newRaidBossName;
+
+         int raidBossId  = 0;
+         if (int.TryParse(raidBoss, out raidBossId)) {
+            if (!Mons.IsValidId(raidBossId)) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");               
+               return result;
+            }
+            newRaidBossName = Mons.GetNameById(raidBossId);
+         }
+         else {
+            raidBossId = Mons.GetIdByName(raidBoss);
+            if (raidBossId == 0) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
+               return result;
+            }
+            newRaidBossName = raidBoss;
+         }
+
+         var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+         if (raids.Count() == 1) {
+            var raid = raids.Single();
+            if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+               result.Users = raid.Users;
+               var allRaids = _raidFileService.GetRaidsFromFile();
+               var oldRaidBossId = allRaids.Single(a => a.Equals(raid)).RaidBossId;
+               allRaids.Single(a => a.Equals(raid)).RaidBossId = raidBossId;
+               _raidFileService.PushRaidsToFile(allRaids);
+
+               string raidBossMessage = oldRaidBossId == 0 ? $"Raidboss has been changed to {newRaidBossName}" : $"Raidboss has been changed from {Mons.GetNameById(oldRaidBossId)} to {newRaidBossName}";
+
+               result.Success = true;
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder.AddField(x => {
+                  x.Name = $"Raid: {raidName}";
+                  x.Value = raidBossMessage;
+                  x.IsInline = false;
+               });
+            }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the raidboss");
+            }
+         }
+         else if (raids.Count() == 0) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+         }
+
+         return result;
+      }
 
       public ModuleResult LeaveRaid(string raidName, IUser requesterUser, IUser userToUpdate) {
          var result = new ModuleResult();

@@ -11,11 +11,14 @@ namespace RaidBot.Entities {
    public class Raid : IEquatable<Raid> {
       public string Name { get; set; }
       public DateTime? Time { get; set; }
+      public TimeSpan Expire { get; set; }
       public List<User> Users { get; set; }
 
       public DateTime CreateDateTime { get; set; }
       public int RaidBossId { get; set; }
 
+
+      #region Methods
       public int UserCount
       {
          get
@@ -47,13 +50,11 @@ namespace RaidBot.Entities {
                raidWithUsers.Append($"{user.Username} {user.GetGuests} | ");
             }
 
-            raidWithUsers.Length-=2;
+            raidWithUsers.Length -= 2;
          }
-         
-
-         
 
          return raidWithUsers.ToString();
       }
+      #endregion
    }
 }

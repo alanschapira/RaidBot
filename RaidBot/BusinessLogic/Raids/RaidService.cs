@@ -90,10 +90,10 @@ namespace RaidBot.BusinessLogic.Raids {
          var result = new ModuleResult();
          string newRaidBossName;
 
-         int raidBossId  = 0;
+         int raidBossId = 0;
          if (int.TryParse(raidBoss, out raidBossId)) {
             if (!Mons.IsValidId(raidBossId)) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");               
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");
                return result;
             }
             newRaidBossName = Mons.GetNameById(raidBossId);
@@ -224,7 +224,8 @@ namespace RaidBot.BusinessLogic.Raids {
          Raid raid = new Raid() {
             Name = raidName,
             Users = new List<User>(),
-            CreateDateTime = DateTime.Now
+            CreateDateTime = DateTime.Now,
+            Expire = TimeSpan.FromMinutes(_permissions.AutoExpireMins)
          };
          if (_permissions.JoinRaidOnCreate) {
             raid.Users.Add(User.FromIUser(user));
@@ -290,6 +291,43 @@ namespace RaidBot.BusinessLogic.Raids {
                });
             }
             else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the name");
+            }
+         }
+         else if (raids.Count() == 0) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+         }
+
+         return result;
+      }
+
+      public ModuleResult ChangeExpire(string raidName, int expire, IGuildUser user) {
+         var result = new ModuleResult();
+
+         var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+         if (raids.Count() == 1) {
+            var raid = raids.Single();
+            if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+
+               result.Users = raid.Users;
+               var allRaids = _raidFileService.GetRaidsFromFile();
+               var expireTimeSpan = TimeSpan.FromMinutes(expire);
+               allRaids.Single(a => a.Equals(raid)).Expire = expireTimeSpan;
+               _raidFileService.PushRaidsToFile(allRaids);
+
+               result.Success = true;
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder.AddField(x => {
+                  x.Name = $"Raid: {raidName}";
+                  x.Value = $"Raid will now expire in {expireTimeSpan.ToString("d'd 'h'h 'm'm 's's'")}";
+                  x.IsInline = false;
+               });
+            }
+            else {
                result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
             }
          }
@@ -299,6 +337,7 @@ namespace RaidBot.BusinessLogic.Raids {
          else {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
          }
+
 
          return result;
       }
@@ -330,7 +369,7 @@ namespace RaidBot.BusinessLogic.Raids {
                      });
                   }
                   else {
-                     result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
+                     result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the time");
                   }
                }
                else if (raids.Count() == 0) {

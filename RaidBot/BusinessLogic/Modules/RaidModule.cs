@@ -187,6 +187,20 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
+      [Command("expire"), Summary("Sets the mins until raid expires")]
+      [Alias("extend")]
+      public async Task SetExpire([Summary("The name of the raid to change the expire time")] string raidName, [Summary("The amount of mins until expire")] int expireMins) {
+         var requesterUser = Context.User as IGuildUser;
+         var result = _raidService.ChangeExpire(raidName, expireMins, requesterUser);
+         if (result.Success) {
+            MessageAllUsers(result);
+         }
+         else {
+            var dmChannel = await requesterUser.GetOrCreateDMChannelAsync();
+            await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+         }
+      }
+
       [Command("changeName"), Summary("Changes the name of a raid")]
       [Alias("Name", "RaidName")]
       public async Task ChangeName([Summary("The name of the raid to change the name")] string raidName, [Summary("The new name of the raid")] string newRaidName) {

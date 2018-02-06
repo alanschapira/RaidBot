@@ -111,6 +111,10 @@ namespace RaidBot.BusinessLogic.Raids {
 
          if (raids.Count() == 1) {
             var raid = raids.Single();
+            if (raid.RaidBossId == raidBossId) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder($"That raid already has a raidboss of: { Mons.GetNameById(raidBossId)}");
+               return result;
+            }
             if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
                result.Users = raid.Users;
                var allRaids = _raidFileService.GetRaidsFromFile();
@@ -122,6 +126,7 @@ namespace RaidBot.BusinessLogic.Raids {
 
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL, raidBossId));
                result.RequesterUserBuilder.AddField(x => {
                   x.Name = $"Raid: {raidName}";
                   x.Value = raidBossMessage;

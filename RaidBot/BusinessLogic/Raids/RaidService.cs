@@ -353,40 +353,36 @@ namespace RaidBot.BusinessLogic.Raids {
          raidTime = raidTime.Replace(".", ":").Replace(",", ":").Replace(";", ":");
          DateTime time;
          if (DateTime.TryParseExact(raidTime, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) {
-            if (time > DateTime.Now.AddHours(_permissions.TimeZone)) {
-               var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+            var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
 
-               if (raids.Count() == 1) {
-                  var raid = raids.Single();
-                  if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+            if (raids.Count() == 1) {
+               var raid = raids.Single();
+               if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
 
-                     result.Users = raid.Users;
-                     var allRaids = _raidFileService.GetRaidsFromFile();
-                     allRaids.Single(a => a.Equals(raid)).Time = time;
-                     _raidFileService.PushRaidsToFile(allRaids);
+                  result.Users = raid.Users;
+                  var allRaids = _raidFileService.GetRaidsFromFile();
+                  allRaids.Single(a => a.Equals(raid)).Time = time;
+                  _raidFileService.PushRaidsToFile(allRaids);
 
-                     result.Success = true;
-                     result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                     result.RequesterUserBuilder.AddField(x => {
-                        x.Name = $"Raid: {raidName}";
-                        x.Value = $"Time has been changed to {time.ToString("H:mm")}";
-                        x.IsInline = false;
-                     });
-                  }
-                  else {
-                     result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the time");
-                  }
-               }
-               else if (raids.Count() == 0) {
-                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+                  result.Success = true;
+                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.RequesterUserBuilder.AddField(x => {
+                     x.Name = $"Raid: {raidName}";
+                     x.Value = $"Time has been changed to {time.ToString("H:mm")}";
+                     x.IsInline = false;
+                  });
                }
                else {
-                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the time");
                }
             }
-            else {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("That time has already passed. Please choose a different time.");
+            else if (raids.Count() == 0) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
             }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+            }
+
          }
          else {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that time. Try using a format of Hours:Mins e.g. `11:30`");

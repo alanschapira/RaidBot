@@ -34,7 +34,9 @@ namespace RaidBot.Entities {
       public override string ToString() {
          string time = Time?.ToString("HH:mm");
          string raidBoss = RaidBossId == 0 ? string.Empty : Mons.GetNameById(RaidBossId);
-         return $"{Name} {time} {raidBoss} ({UserCount} Attendees)";
+         var timeLeft = Expire - (DateTime.Now - CreateDateTime);
+         string expire = timeLeft.Days >=1 ? timeLeft.ToString("d'd 'h'h 'm'm'") : timeLeft.ToString("h'h 'm'm'");
+         return $"{Name} {time} {raidBoss} (Expires {expire}) ({UserCount} Attendees)";
       }
 
       public string ToStringUsers() {

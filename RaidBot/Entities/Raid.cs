@@ -5,12 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using System.Text.RegularExpressions;
 
 namespace RaidBot.Entities {
    [Serializable]
    public class Raid : IEquatable<Raid> {
       public string Name { get; set; }
       public DateTime? Time { get; set; }
+      public DateTime? Day { get; set; }
       public DateTime ExpireStart { get; set; }
       public TimeSpan Expire { get; set; }
       public List<User> Users { get; set; }
@@ -33,8 +35,10 @@ namespace RaidBot.Entities {
 
       public override string ToString() {
          string time = Time?.ToString("HH:mm");
-         string raidBoss = RaidBossId == 0 ? string.Empty : Mons.GetNameById(RaidBossId);         
-         return $"{Name} {time} {raidBoss} (Expires {ToStringExpire()}) ({UserCount} Attendees)";
+         string day = Day?.ToString("yyyy'-'MM'-'dd");
+         string raidBoss = RaidBossId == 0 ? string.Empty : Mons.GetNameById(RaidBossId);
+         string result = $"{Name} {day} {time} {raidBoss} (Expires {ToStringExpire()}) ({UserCount} Attendees)";
+         return Regex.Replace(result, @"\s+", " "); ;
       }
 
       public string ToStringExpire() {

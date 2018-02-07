@@ -201,8 +201,6 @@ namespace RaidBot.BusinessLogic.Raids {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
          }
          return result;
-
-
       }
 
       public EmbedBuilder MyRaids(IUser user) {
@@ -389,6 +387,47 @@ namespace RaidBot.BusinessLogic.Raids {
          }
          else {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that time. Try using a format of Hours:Mins e.g. `11:30`");
+         }
+         return result;
+      }
+
+      public ModuleResult ChangeDate(string raidName, string raidDate, IGuildUser user) {
+         var result = new ModuleResult();
+         
+         DateTime date;
+         if (DateTime.TryParseExact(raidDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date)) {
+            var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+            if (raids.Count() == 1) {
+               var raid = raids.Single();
+               if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+
+                  result.Users = raid.Users;
+                  var allRaids = _raidFileService.GetRaidsFromFile();
+                  allRaids.Single(a => a.Equals(raid)).Day = date;
+                  _raidFileService.PushRaidsToFile(allRaids);
+
+                  result.Success = true;
+                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.RequesterUserBuilder.AddField(x => {
+                     x.Name = $"Raid: {raidName}";
+                     x.Value = $"Date has been changed to {date.ToString("yyyy'-'MM'-'dd")}";
+                     x.IsInline = false;
+                  });
+               }
+               else {
+                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the date");
+               }
+            }
+            else if (raids.Count() == 0) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+            }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+            }
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that date. Try using a format of year-month-day e.g.`2018-04-28`");
          }
          return result;
       }

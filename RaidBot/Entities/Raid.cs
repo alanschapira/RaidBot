@@ -11,9 +11,9 @@ namespace RaidBot.Entities {
    public class Raid : IEquatable<Raid> {
       public string Name { get; set; }
       public DateTime? Time { get; set; }
+      public DateTime ExpireStart { get; set; }
       public TimeSpan Expire { get; set; }
       public List<User> Users { get; set; }
-
       public DateTime CreateDateTime { get; set; }
       public int RaidBossId { get; set; }
 
@@ -33,10 +33,13 @@ namespace RaidBot.Entities {
 
       public override string ToString() {
          string time = Time?.ToString("HH:mm");
-         string raidBoss = RaidBossId == 0 ? string.Empty : Mons.GetNameById(RaidBossId);
-         var timeLeft = Expire - (DateTime.Now - CreateDateTime);
-         string expire = timeLeft.Days >=1 ? timeLeft.ToString("d'd 'h'h 'm'm'") : timeLeft.ToString("h'h 'm'm'");
-         return $"{Name} {time} {raidBoss} (Expires {expire}) ({UserCount} Attendees)";
+         string raidBoss = RaidBossId == 0 ? string.Empty : Mons.GetNameById(RaidBossId);         
+         return $"{Name} {time} {raidBoss} (Expires {ToStringExpire()}) ({UserCount} Attendees)";
+      }
+
+      public string ToStringExpire() {
+         var timeLeft = (Expire - (DateTime.Now.AddSeconds(-15) - ExpireStart));
+         return timeLeft.Days >= 1 ? timeLeft.ToString("d'd 'h'h 'm'm'") : timeLeft.ToString("h'h 'm'm'");
       }
 
       public string ToStringUsers() {

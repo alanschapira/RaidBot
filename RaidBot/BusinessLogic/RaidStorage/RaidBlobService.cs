@@ -24,7 +24,7 @@ namespace RaidBot.BusinessLogic.RaidStorage {
       }
 
       private List<Raid> DeleteExpiredRaids(List<Raid> raids) {
-         var aliveRaids = raids.Where(a => (DateTime.Now - a.CreateDateTime).TotalMinutes < a.Expire.TotalMinutes);
+         var aliveRaids = raids.Where(a => (DateTime.Now - a.ExpireStart).TotalMinutes < a.Expire.TotalMinutes);
          if (_serverSettings.JoinRaidOnCreate) {
             aliveRaids = aliveRaids.Where(a => a.Users.Count() > 0);
          }

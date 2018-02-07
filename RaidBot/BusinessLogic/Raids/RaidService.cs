@@ -225,11 +225,13 @@ namespace RaidBot.BusinessLogic.Raids {
 
       public ModuleResult CreateRaid(string raidName, IUser user) {
          ModuleResult result = new ModuleResult();
+         var now = DateTime.Now;
 
          Raid raid = new Raid() {
             Name = raidName,
             Users = new List<User>(),
-            CreateDateTime = DateTime.Now,
+            CreateDateTime = now,
+            ExpireStart = now,
             Expire = TimeSpan.FromMinutes(_permissions.AutoExpireMins)
          };
          if (_permissions.JoinRaidOnCreate) {
@@ -322,13 +324,14 @@ namespace RaidBot.BusinessLogic.Raids {
                var allRaids = _raidFileService.GetRaidsFromFile();
                var expireTimeSpan = TimeSpan.FromMinutes(expire);
                allRaids.Single(a => a.Equals(raid)).Expire = expireTimeSpan;
+               allRaids.Single(a => a.Equals(raid)).ExpireStart = DateTime.Now;
                _raidFileService.PushRaidsToFile(allRaids);
 
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
                result.RequesterUserBuilder.AddField(x => {
                   x.Name = $"Raid: {raidName}";
-                  x.Value = $"Raid will now expire in {expireTimeSpan.ToString("d'd 'h'h 'm'm 's's'")}";
+                  x.Value = $"Raid will now expire in {allRaids.Single(a => a.Equals(raid)).ToStringExpire()}";
                   x.IsInline = false;
                });
             }

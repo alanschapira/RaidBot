@@ -411,7 +411,7 @@ namespace RaidBot.BusinessLogic.Raids {
                   result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
                   result.RequesterUserBuilder.AddField(x => {
                      x.Name = $"Raid: {raidName}";
-                     x.Value = $"Date has been changed to {date.ToString("yyyy'-'MM'-'dd")}";
+                     x.Value = $"Date has been changed to {date.ToString("yyyy'-'MM'-'dd")}\nPlease note you will need to change the expire seperately";
                      x.IsInline = false;
                   });
                }

@@ -20,7 +20,18 @@ namespace RaidBot.BusinessLogic.RaidStorage {
 
          var aliveRaids = DeleteExpiredRaids(raids);
 
+         aliveRaids = ChangeOrder(aliveRaids);
+
          return aliveRaids;
+      }
+
+      private List<Raid> ChangeOrder(List<Raid> aliveRaids) {
+         return aliveRaids
+            .OrderByDescending(a => !a.Day.HasValue)
+            .ThenBy(a => a.Day)
+            .ThenByDescending(a => !a.Time.HasValue)
+            .ThenBy(a => a.Time)
+            .ToList();
       }
 
       private List<Raid> DeleteExpiredRaids(List<Raid> raids) {

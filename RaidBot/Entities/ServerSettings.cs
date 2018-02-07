@@ -10,13 +10,11 @@ namespace RaidBot.Entities {
    public class ServerSettings {
       public ServerSettings() {
          JoinRaidOnCreate = true;
-         AutoDeleteRaid = 15;
          AutoExpireMins = 120;
       }
       public GuildPermission? AdminRights { get; set; }
       public bool JoinRaidOnCreate { get; set; }
       public int TimeZone { get; set; }
-      public int AutoDeleteRaid { get; set; }
       public int AutoExpireMins { get; set; }
 
       #region Methods

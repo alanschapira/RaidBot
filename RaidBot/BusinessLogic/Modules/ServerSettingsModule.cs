@@ -67,25 +67,8 @@ namespace RaidBot.BusinessLogic.Modules {
          await dmChannel.SendMessageAsync("", false, builder.Build());
       }
 
-      [Command("TimeZone"), Summary("Set the TimeZone you are located using + or - e.g. -4")]
-      public async Task SetTimeZone([Summary("TimeZone you are located using + or - e.g. -4")] int timeZone) {
-
-         var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
-
-         _permissionService.SetTimeZone(timeZone);
-
-         var builder = EmbedBuilderHelper.GreenBuilder();
-
-         builder.AddField(x => {
-            x.Name = "Setting: TimeZone";
-            x.Value = $"Setting has been changed to: {timeZone}";
-            x.IsInline = false;
-         });
-
-         await dmChannel.SendMessageAsync("", false, builder.Build());
-      }
-
       [Command("AutoDeleteRaid"), Summary("Amount of minutes after a raid has finished you want it to auto delete")]
+      [Alias("DefaultExpire")]
       public async Task AutoDeleteRaid([Summary("Minutes")] int mins) {
 
          var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
@@ -121,5 +104,6 @@ namespace RaidBot.BusinessLogic.Modules {
 
          await dmChannel.SendMessageAsync("", false, builder.Build());
       }
+
    }
 }

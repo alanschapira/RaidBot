@@ -41,19 +41,13 @@ namespace RaidBot.BusinessLogic.PermissionStorage {
 
       public void SetAutoDeleteRaid(int mins) {
          var permissions = GetSettings();
-         permissions.AutoDeleteRaid = mins;
+         permissions.AutoExpireMins = mins;
          SetPermissions(permissions);
       }
 
       public void SetJoinRaidOnCreatePermission(bool permission) {
          var permissions = GetSettings();
          permissions.JoinRaidOnCreate = permission;
-         SetPermissions(permissions);
-      }
-
-      public void SetTimeZone(int timeZone) {
-         var permissions = GetSettings();
-         permissions.TimeZone = timeZone;
          SetPermissions(permissions);
       }
 

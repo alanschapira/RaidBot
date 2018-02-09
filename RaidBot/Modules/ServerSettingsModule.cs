@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using RaidBot.BusinessLogic.PermissionStorage;
 using RaidBot.BusinessLogic.PermissionStorage.Interfaces;
 
-namespace RaidBot.BusinessLogic.Modules {
+namespace RaidBot.Modules {
    [Name("Server Settings")]
    [RequireUserPermission(GuildPermission.Administrator, Group = "Permission"), RequireOwner(Group = "Permission")]
    public class ServerSettingsModule : ModuleBase {

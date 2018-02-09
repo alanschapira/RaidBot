@@ -170,9 +170,9 @@
     <Compile Include="BusinessLogic\RaidStorage\Interfaces\IRaidFileService.cs" />
     <Compile Include="BusinessLogic\RaidStorage\RaidJsonService.cs" />
     <Compile Include="BusinessLogic\PermissionStorage\PermissionBlobService.cs" />
-    <Compile Include="BusinessLogic\Modules\HelpModule.cs" />
-    <Compile Include="BusinessLogic\Modules\RaidModule.cs" />
-    <Compile Include="BusinessLogic\Modules\ServerSettingsModule.cs" />
+    <Compile Include="Modules\HelpModule.cs" />
+    <Compile Include="Modules\RaidModule.cs" />
+    <Compile Include="Modules\ServerSettingsModule.cs" />
     <Compile Include="Entities\ServerSettings.cs" />
     <Compile Include="Entities\Mons.cs" />
     <Compile Include="Entities\User.cs" />

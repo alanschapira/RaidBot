@@ -8,7 +8,7 @@ using RaidBot.BusinessLogic.Raids;
 using RaidBot.Entities;
 using RaidBot.Helpers;
 
-namespace RaidBot.BusinessLogic.Modules {
+namespace RaidBot.Modules {
    [Name("Raid")]
    public class RaidModule : ModuleBase {
 

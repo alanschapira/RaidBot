@@ -22,8 +22,8 @@ namespace RaidBot.BusinessLogic.Modules {
          _raidService = new RaidService($"raid{Context.Guild.Id.ToString()}", _serverPermissions);
       }
 
-      [Command("create"), Summary("Creates a Raid")]
-      [Alias("add", "new")]
+      [Command("Create"), Summary("Creates a Raid")]
+      [Alias("Add", "New")]
       public async Task Create(
          [Summary("The name of the raid to create")] string raidName) {
          var user = Context.User as IGuildUser;
@@ -41,8 +41,8 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("pokemon"), Summary("Chooses the pokemon")]
-      [Alias("boss", "raidboss")]
+      [Command("Pokemon"), Summary("Chooses the pokemon")]
+      [Alias("Boss", "Raidboss")]
       public async Task RaidBoss([Summary("The name of the raid to join")] string raidName, [Summary("The name or id of the pokemon")] string pokemonName) {
          var user = Context.User as IGuildUser;
 
@@ -59,15 +59,15 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("get"), Summary("Get a list of all raids")]
-      [Alias("info", "raids")]
+      [Command("Get"), Summary("Get a list of all raids")]
+      [Alias("Info", "Raids")]
       public async Task Get() {
          var result = _raidService.GetRaids();
          await ReplyAsync("", false, result.Build());
       }
 
-      [Command("get"), Summary("Gets the details of a specific Raid")]
-      [Alias("info", "raid")]
+      [Command("Get"), Summary("Gets the details of a specific Raid")]
+      [Alias("Info", "Raid")]
       public async Task Get([Summary("The name of the raid to get details about")] string raidName) {
 
          var result = _raidService.GetSpecificRaid(raidName);
@@ -80,8 +80,8 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("join"), Summary("Joins a specific Raid")]
-      [Alias("attend", "adduser")]
+      [Command("Join"), Summary("Joins a specific Raid")]
+      [Alias("Attend")]
       public async Task Join([Summary("The name of the raid to join")] string raidName, [Summary("Number of guests")] int guests = 0) {
 
          var result = _raidService.JoinRaid(raidName, Context.User, guests);
@@ -89,8 +89,8 @@ namespace RaidBot.BusinessLogic.Modules {
          await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
       }
 
-      [Command("join"), Summary("Adds a user to a raid")]
-      [Alias("attend", "adduser")]
+      [Command("Join"), Summary("Adds a user to a raid")]
+      [Alias("Attend", "AddUser")]
       public async Task Join([Summary("The name of the raid to join")] string raidName, [Summary("Mention the user you want to add")] IUser user, [Summary("Number of guests")] int guests = 0) {
 
          var requesterUser = Context.User as IGuildUser;
@@ -107,8 +107,8 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("delete"), Summary("Deletes a specific Raid")]
-      [Alias("remove", "destroy")]
+      [Command("Delete"), Summary("Deletes a specific Raid")]
+      [Alias("Remove", "Destroy")]
       public async Task Delete([Summary("Name of the raid to delete")] string raidName) {
 
          var user = Context.User as IGuildUser;
@@ -124,8 +124,8 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("leave"), Summary("Leaves a specific Raid")]
-      [Alias("unattend")]
+      [Command("Leave"), Summary("Leaves a specific Raid")]
+      [Alias("Unattend")]
       public async Task Leave([Summary("The name of the raid to leave")] string raidName, IUser user = null) {
 
          var requesterUser = Context.User as IGuildUser;
@@ -140,8 +140,8 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("myRaids"), Summary("Gets the name of the raids you are attending")]
-      [Alias("me")]
+      [Command("MyRaids"), Summary("Gets the name of the raids you are attending")]
+      [Alias("Me")]
       public async Task MyRaids(IUser user = null) {
 
          var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
@@ -149,8 +149,8 @@ namespace RaidBot.BusinessLogic.Modules {
          await dmChannel.SendMessageAsync("", false, result.Build());
       }
 
-      [Command("addGuests"), Summary("Add guests to an attendee")]
-      [Alias("addGuest")]
+      [Command("AddGuests"), Summary("Add guests to an attendee")]
+      [Alias("AddGuest", "Guest", "Guests")]
       public async Task AddGuests([Summary("The name of the raid to add a guest to")] string raidName, int guests, IUser user = null) {
 
          ModuleResult result;
@@ -173,7 +173,7 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("changeTime"), Summary("Changes the time of a raid")]
+      [Command("ChangeTime"), Summary("Changes the time of a raid")]
       [Alias("Time", "RaidTime")]
       public async Task ChangeTime([Summary("The name of the raid to change the time")] string raidName, [Summary("The new time of the raid")] string raidTime) {
          var requesterUser = Context.User as IGuildUser;
@@ -187,7 +187,7 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("changeDate"), Summary("Changes the date of a raid")]
+      [Command("ChangeDate"), Summary("Changes the date of a raid")]
       [Alias("Date", "RaidDate")]
       public async Task ChangeDate([Summary("The name of the raid to change the date")] string raidName, [Summary("The date of the raid - format must be yyyy-mm-dd")] string raidDate) {
          var requesterUser = Context.User as IGuildUser;
@@ -201,9 +201,9 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("expire"), Summary("Sets the mins until raid expires")]
-      [Alias("extend")]
-      public async Task SetExpire([Summary("The name of the raid to change the expire time")] string raidName, [Summary("The amount of mins until expire")] int expireMins) {
+      [Command("Expire"), Summary("Sets the mins until raid expires")]
+      [Alias("Extend", "ChangeExpire")]
+      public async Task ChangeExpire([Summary("The name of the raid to change the expire time")] string raidName, [Summary("The amount of mins until expire")] int expireMins) {
          var requesterUser = Context.User as IGuildUser;
          var result = _raidService.ChangeExpire(raidName, expireMins, requesterUser);
          if (result.Success) {
@@ -215,8 +215,8 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("changeName"), Summary("Changes the name of a raid")]
-      [Alias("Name", "RaidName")]
+      [Command("Name"), Summary("Changes the name of a raid")]
+      [Alias("ChangeName", "RaidName")]
       public async Task ChangeName([Summary("The name of the raid to change the name")] string raidName, [Summary("The new name of the raid")] string newRaidName) {
          var requesterUser = Context.User as IGuildUser;
          var result = _raidService.ChangeName(raidName, newRaidName, requesterUser);
@@ -229,7 +229,7 @@ namespace RaidBot.BusinessLogic.Modules {
          }
       }
 
-      [Command("message"), Summary("Message everyone in a raid")]
+      [Command("Message"), Summary("Message everyone in a raid")]
       public async Task Message([Summary("The name of the raid to message")] string raidName, [Summary("The message"), Remainder] string message) {
          var requesterUser = Context.User as IGuildUser;
          var result = _raidService.MessageUsers(raidName, message);

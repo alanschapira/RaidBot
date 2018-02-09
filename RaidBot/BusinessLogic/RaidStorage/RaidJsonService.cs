@@ -30,12 +30,31 @@ namespace RaidBot.BusinessLogic.RaidStorage {
          }
          List<Raid> raids = JsonConvert.DeserializeObject<List<Raid>>(json);
 
-         var aliveRaids = raids.Where(a => a.CreateDateTime > DateTime.Now.AddHours(-3)).Where(a => a.Users.Count() > 0);
+         var aliveRaids = DeleteExpiredRaids(raids);
+
+         aliveRaids = ChangeOrder(aliveRaids);
+
+         return raids;
+      }
+
+      private List<Raid> ChangeOrder(List<Raid> aliveRaids) {
+         return aliveRaids
+            .OrderByDescending(a => !a.Day.HasValue)
+            .ThenBy(a => a.Day)
+            .ThenByDescending(a => !a.Time.HasValue)
+            .ThenBy(a => a.Time)
+            .ToList();
+      }
+
+      private List<Raid> DeleteExpiredRaids(List<Raid> raids) {
+         var aliveRaids = raids.Where(a => (DateTime.Now - a.ExpireStart).TotalMinutes < a.Expire.TotalMinutes);
+         if (_serverSettings.JoinRaidOnCreate) {
+            aliveRaids = aliveRaids.Where(a => a.Users.Count() > 0);
+         }
          if (aliveRaids.Count() < raids.Count()) {
             PushRaidsToFile(aliveRaids.ToList());
-            return aliveRaids.ToList();
          }
-         return raids;
+         return aliveRaids.ToList();
       }
 
       public void PushRaidsToFile(List<Raid> raids) {

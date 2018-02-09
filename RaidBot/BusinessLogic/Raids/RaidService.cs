@@ -86,6 +86,66 @@ namespace RaidBot.BusinessLogic.Raids {
          return result;
       }
 
+      public ModuleResult AddPokemon(string raidName, string raidBoss, IGuildUser user) {
+         var result = new ModuleResult();
+         string newRaidBossName;
+
+         int raidBossId = 0;
+         if (int.TryParse(raidBoss, out raidBossId)) {
+            if (!Mons.IsValidId(raidBossId)) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");
+               return result;
+            }
+            newRaidBossName = Mons.GetNameById(raidBossId);
+         }
+         else {
+            raidBossId = Mons.GetIdByName(raidBoss);
+            if (raidBossId == 0) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
+               return result;
+            }
+            newRaidBossName = raidBoss;
+         }
+
+         var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+         if (raids.Count() == 1) {
+            var raid = raids.Single();
+            if (raid.RaidBossId == raidBossId) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder($"That raid already has a raidboss of: { Mons.GetNameById(raidBossId)}");
+               return result;
+            }
+            if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+               result.Users = raid.Users;
+               var allRaids = _raidFileService.GetRaidsFromFile();
+               var oldRaidBossId = allRaids.Single(a => a.Equals(raid)).RaidBossId;
+               allRaids.Single(a => a.Equals(raid)).RaidBossId = raidBossId;
+               _raidFileService.PushRaidsToFile(allRaids);
+
+               string raidBossMessage = oldRaidBossId == 0 ? $"Raidboss has been changed to {newRaidBossName}" : $"Raidboss has been changed from {Mons.GetNameById(oldRaidBossId)} to {newRaidBossName}";
+
+               result.Success = true;
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL, raidBossId));
+               result.RequesterUserBuilder.AddField(x => {
+                  x.Name = $"Raid: {raidName}";
+                  x.Value = raidBossMessage;
+                  x.IsInline = false;
+               });
+            }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the raidboss");
+            }
+         }
+         else if (raids.Count() == 0) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+         }
+
+         return result;
+      }
 
       public ModuleResult LeaveRaid(string raidName, IUser requesterUser, IUser userToUpdate) {
          var result = new ModuleResult();
@@ -141,8 +201,6 @@ namespace RaidBot.BusinessLogic.Raids {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
          }
          return result;
-
-
       }
 
       public EmbedBuilder MyRaids(IUser user) {
@@ -163,59 +221,32 @@ namespace RaidBot.BusinessLogic.Raids {
 
       }
 
-      public ModuleResult CreateRaid(string raidName, string raidTime, string raidBoss, IUser user, int guests) {
+      public ModuleResult CreateRaid(string raidName, IUser user) {
          ModuleResult result = new ModuleResult();
+         var now = DateTime.Now;
 
-         int id = 0;
-         if (int.TryParse(raidBoss, out id)) {
-            if (!Mons.IsValidId(id)) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");
-               return result;
-            }
+         Raid raid = new Raid() {
+            Name = raidName,
+            Users = new List<User>(),
+            CreateDateTime = now,
+            ExpireStart = now,
+            Expire = TimeSpan.FromMinutes(_permissions.AutoExpireMins)
+         };
+         if (_permissions.JoinRaidOnCreate) {
+            raid.Users.Add(User.FromIUser(user));
+         }
+         bool success = AddRaids(raid);
+         if (success) {
+            result.Success = true;
+            result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+            result.RequesterUserBuilder.AddField(x => {
+               x.Name = "Raid succesfully created:";
+               x.Value = raid.ToString();
+               x.IsInline = false;
+            });
          }
          else {
-            id = Mons.GetIdByName(raidBoss);
-            if (id == 0) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
-               return result;
-            }
-         }
-
-         raidTime = raidTime.Replace(".", ":").Replace(",", ":").Replace(";", ":");
-         DateTime time;
-         if (DateTime.TryParseExact(raidTime, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) {
-            if (time > DateTime.Now.AddHours(_permissions.TimeZone)) {
-               Raid raid = new Raid() {
-                  Name = raidName,
-                  Time = time,
-                  Users = new List<User>(),
-                  CreateDateTime = DateTime.Now,
-                  RaidBossId = id
-               };
-               if (_permissions.JoinRaidOnCreate) {
-                  raid.Users.Add(User.FromIUser(user, guests));
-               }
-               bool success = AddRaids(raid);
-               if (success) {
-                  result.Success = true;
-                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.RequesterUserBuilder.AddField(x => {
-                     x.Name = "Raid succesfully created:";
-                     x.Value = raid.ToString();
-                     x.IsInline = false;
-                  });
-                  result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL,id));
-               }
-               else {
-                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
-               }
-            }
-            else {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("That time has already passed. Please choose a different time.");
-            }
-         }
-         else {
-            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that time. Try using a format of Hours:Mins e.g. `11:30`");
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
          }
          return result;
       }
@@ -265,7 +296,7 @@ namespace RaidBot.BusinessLogic.Raids {
                });
             }
             else {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the name");
             }
          }
          else if (raids.Count() == 0) {
@@ -278,49 +309,125 @@ namespace RaidBot.BusinessLogic.Raids {
          return result;
       }
 
+      public ModuleResult ChangeExpire(string raidName, int expire, IGuildUser user) {
+         var result = new ModuleResult();
+
+         var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+         if (raids.Count() == 1) {
+            var raid = raids.Single();
+            if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+
+               result.Users = raid.Users;
+               var allRaids = _raidFileService.GetRaidsFromFile();
+               var expireTimeSpan = TimeSpan.FromMinutes(expire);
+               allRaids.Single(a => a.Equals(raid)).Expire = expireTimeSpan;
+               allRaids.Single(a => a.Equals(raid)).ExpireStart = DateTime.Now;
+               _raidFileService.PushRaidsToFile(allRaids);
+
+               result.Success = true;
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder.AddField(x => {
+                  x.Name = $"Raid: {raidName}";
+                  x.Value = $"Raid will now expire in {allRaids.Single(a => a.Equals(raid)).ToStringExpire()}";
+                  x.IsInline = false;
+               });
+            }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
+            }
+         }
+         else if (raids.Count() == 0) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+         }
+
+
+         return result;
+      }
+
       public ModuleResult ChangeTime(string raidName, string raidTime, IGuildUser user) {
          var result = new ModuleResult();
 
          raidTime = raidTime.Replace(".", ":").Replace(",", ":").Replace(";", ":");
          DateTime time;
          if (DateTime.TryParseExact(raidTime, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) {
-            if (time > DateTime.Now.AddHours(_permissions.TimeZone)) {
-               var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+            var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
 
-               if (raids.Count() == 1) {
-                  var raid = raids.Single();
-                  if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+            if (raids.Count() == 1) {
+               var raid = raids.Single();
+               if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
 
-                     result.Users = raid.Users;
-                     var allRaids = _raidFileService.GetRaidsFromFile();
-                     allRaids.Single(a => a.Equals(raid)).Time = time;
-                     _raidFileService.PushRaidsToFile(allRaids);
+                  result.Users = raid.Users;
+                  var allRaids = _raidFileService.GetRaidsFromFile();
+                  allRaids.Single(a => a.Equals(raid)).Time = time;
+                  _raidFileService.PushRaidsToFile(allRaids);
 
-                     result.Success = true;
-                     result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                     result.RequesterUserBuilder.AddField(x => {
-                        x.Name = $"Raid: {raidName}";
-                        x.Value = $"Time has been changed to {time.ToString("H:mm")}";
-                        x.IsInline = false;
-                     });
-                  }
-                  else {
-                     result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
-                  }
-               }
-               else if (raids.Count() == 0) {
-                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+                  result.Success = true;
+                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.RequesterUserBuilder.AddField(x => {
+                     x.Name = $"Raid: {raidName}";
+                     x.Value = $"Time has been changed to {time.ToString("H:mm")}";
+                     x.IsInline = false;
+                  });
                }
                else {
-                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the time");
                }
             }
-            else {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("That time has already passed. Please choose a different time.");
+            else if (raids.Count() == 0) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
             }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+            }
+
          }
          else {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that time. Try using a format of Hours:Mins e.g. `11:30`");
+         }
+         return result;
+      }
+
+      public ModuleResult ChangeDate(string raidName, string raidDate, IGuildUser user) {
+         var result = new ModuleResult();
+         
+         DateTime date;
+         if (DateTime.TryParseExact(raidDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date)) {
+            var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+            if (raids.Count() == 1) {
+               var raid = raids.Single();
+               if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+
+                  result.Users = raid.Users;
+                  var allRaids = _raidFileService.GetRaidsFromFile();
+                  allRaids.Single(a => a.Equals(raid)).Day = date;
+                  _raidFileService.PushRaidsToFile(allRaids);
+
+                  result.Success = true;
+                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.RequesterUserBuilder.AddField(x => {
+                     x.Name = $"Raid: {raidName}";
+                     x.Value = $"Date has been changed to {date.ToString("yyyy'-'MM'-'dd")}\nPlease note you will need to change the expire seperately";
+                     x.IsInline = false;
+                  });
+               }
+               else {
+                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the date");
+               }
+            }
+            else if (raids.Count() == 0) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+            }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+            }
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that date. Try using a format of year-month-day e.g.`2018-04-28`");
          }
          return result;
       }

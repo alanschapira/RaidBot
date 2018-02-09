@@ -10,13 +10,14 @@ namespace RaidBot.Entities {
    public class ServerSettings {
       public ServerSettings() {
          JoinRaidOnCreate = true;
-         AutoDeleteRaid = 15;
+         AutoExpireMins = 120;
       }
       public GuildPermission? AdminRights { get; set; }
       public bool JoinRaidOnCreate { get; set; }
       public int TimeZone { get; set; }
-      public int AutoDeleteRaid { get; set; }
+      public int AutoExpireMins { get; set; }
 
+      #region Methods
       public override string ToString() {
          StringBuilder builder = new StringBuilder();
 
@@ -25,12 +26,13 @@ namespace RaidBot.Entities {
 
          foreach (PropertyInfo prop in props) {
             var name = prop.Name;
-            var value = prop.GetValue(this, null)?? "None";
+            var value = prop.GetValue(this, null) ?? "None";
 
             builder.Append($"{name}: {value}\n");
          }
 
          return builder.ToString();
       }
+      #endregion
    }
 }

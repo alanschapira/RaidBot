@@ -60,7 +60,7 @@ namespace RaidBot.Modules {
          }
          builder.AddField(x => {
             x.Name = "RaidBot Server";
-            x.Value = "Please come visit for questions, updates and testing https://discord.gg/d4KHHq8";
+            x.Value = "Please come visit for questions, updates and testing https://discord.gg/d4KHHq8 \nIf you would like to donate, here is a link: https://www.paypal.me/RaidBot/5";
             x.IsInline = false;
          });
          await dmChannel.SendMessageAsync("", false, builder.Build()); /* then we send it to the user. */

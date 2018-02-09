@@ -22,43 +22,6 @@ namespace RaidBot.Modules {
          _raidService = new RaidService($"raid{Context.Guild.Id.ToString()}", _serverPermissions);
       }
 
-      [Command("Create"), Summary("Creates a Raid")]
-      [Alias("Add", "New")]
-      public async Task Create(
-         [Summary("The name of the raid to create")] string raidName) {
-         var user = Context.User as IGuildUser;
-
-         if (await CheckPermission(user, _serverPermissions)) {
-            var result = _raidService.CreateRaid(raidName, Context.User);
-
-            if (result.Success) {
-               await ReplyAsync("", false, result.RequesterUserBuilder.Build());
-            }
-            else {
-               var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
-               await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
-            }
-         }
-      }
-
-      [Command("Pokemon"), Summary("Chooses the pokemon")]
-      [Alias("Boss", "Raidboss")]
-      public async Task RaidBoss([Summary("The name of the raid to join")] string raidName, [Summary("The name or id of the pokemon")] string pokemonName) {
-         var user = Context.User as IGuildUser;
-
-         if (await CheckPermission(user, _serverPermissions)) {
-            var result = _raidService.AddPokemon(raidName, pokemonName, user);
-
-            if (result.Success) {
-               await ReplyAsync("", false, result.RequesterUserBuilder.Build());
-            }
-            else {
-               var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
-               await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
-            }
-         }
-      }
-
       [Command("Get"), Summary("Get a list of all raids")]
       [Alias("Info", "Raids")]
       public async Task Get() {
@@ -107,23 +70,6 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Delete"), Summary("Deletes a specific Raid")]
-      [Alias("Remove", "Destroy")]
-      public async Task Delete([Summary("Name of the raid to delete")] string raidName) {
-
-         var user = Context.User as IGuildUser;
-         if (await CheckPermission(user, _serverPermissions)) {
-            var result = _raidService.DeleteRaid(raidName, user);
-            if (result.Success) {
-               MessageAllUsers(result);
-            }
-            else {
-               var dmChannel = await user.GetOrCreateDMChannelAsync();
-               await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
-            }
-         }
-      }
-
       [Command("Leave"), Summary("Leaves a specific Raid")]
       [Alias("Unattend")]
       public async Task Leave([Summary("The name of the raid to leave")] string raidName, IUser user = null) {
@@ -140,6 +86,8 @@ namespace RaidBot.Modules {
          }
       }
 
+
+
       [Command("MyRaids"), Summary("Gets the name of the raids you are attending")]
       [Alias("Me")]
       public async Task MyRaids(IUser user = null) {
@@ -149,7 +97,7 @@ namespace RaidBot.Modules {
          await dmChannel.SendMessageAsync("", false, result.Build());
       }
 
-      [Command("AddGuests"), Summary("Add guests to an attendee")]
+      [Command("AddGuests"), Summary("Add guests to youself or an attendee")]
       [Alias("AddGuest", "Guest", "Guests")]
       public async Task AddGuests([Summary("The name of the raid to add a guest to")] string raidName, int guests, IUser user = null) {
 
@@ -173,8 +121,45 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("ChangeTime"), Summary("Changes the time of a raid")]
-      [Alias("Time", "RaidTime")]
+      [Command("Create"), Summary("Creates a Raid")]
+      [Alias("Add", "New")]
+      public async Task Create(
+         [Summary("The name of the raid to create")] string raidName) {
+         var user = Context.User as IGuildUser;
+
+         if (await CheckPermission(user, _serverPermissions)) {
+            var result = _raidService.CreateRaid(raidName, Context.User);
+
+            if (result.Success) {
+               await ReplyAsync("", false, result.RequesterUserBuilder.Build());
+            }
+            else {
+               var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
+               await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+            }
+         }
+      }
+
+      [Command("Pokemon"), Summary("Chooses the pokemon")]
+      [Alias("Boss", "Raidboss")]
+      public async Task RaidBoss([Summary("The name of the raid to join")] string raidName, [Summary("The name or id of the pokemon")] string pokemonName) {
+         var user = Context.User as IGuildUser;
+
+         if (await CheckPermission(user, _serverPermissions)) {
+            var result = _raidService.AddPokemon(raidName, pokemonName, user);
+
+            if (result.Success) {
+               await ReplyAsync("", false, result.RequesterUserBuilder.Build());
+            }
+            else {
+               var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
+               await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+            }
+         }
+      }
+
+      [Command("Time"), Summary("Changes the time of a raid")]
+      [Alias("ChangeTime", "RaidTime")]
       public async Task ChangeTime([Summary("The name of the raid to change the time")] string raidName, [Summary("The new time of the raid")] string raidTime) {
          var requesterUser = Context.User as IGuildUser;
          var result = _raidService.ChangeTime(raidName, raidTime, requesterUser);
@@ -187,8 +172,8 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("ChangeDate"), Summary("Changes the date of a raid")]
-      [Alias("Date", "RaidDate")]
+      [Command("Date"), Summary("Changes the date of a raid")]
+      [Alias("ChangeDate", "RaidDate")]
       public async Task ChangeDate([Summary("The name of the raid to change the date")] string raidName, [Summary("The date of the raid - format must be yyyy-mm-dd")] string raidDate) {
          var requesterUser = Context.User as IGuildUser;
          var result = _raidService.ChangeDate(raidName, raidDate, requesterUser);
@@ -239,6 +224,24 @@ namespace RaidBot.Modules {
          else {
             var dmChannel = await requesterUser.GetOrCreateDMChannelAsync();
             await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+         }
+      }
+
+
+      [Command("Delete"), Summary("Deletes a specific Raid")]
+      [Alias("Remove", "Destroy")]
+      public async Task Delete([Summary("Name of the raid to delete")] string raidName) {
+
+         var user = Context.User as IGuildUser;
+         if (await CheckPermission(user, _serverPermissions)) {
+            var result = _raidService.DeleteRaid(raidName, user);
+            if (result.Success) {
+               MessageAllUsers(result);
+            }
+            else {
+               var dmChannel = await user.GetOrCreateDMChannelAsync();
+               await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+            }
          }
       }
 

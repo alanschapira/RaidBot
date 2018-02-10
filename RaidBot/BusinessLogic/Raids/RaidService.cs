@@ -221,6 +221,61 @@ namespace RaidBot.BusinessLogic.Raids {
 
       }
 
+      public ModuleResult CreateRaid(string raidName, string raidTime, string raidBoss, IUser user, int guests) {
+         ModuleResult result = new ModuleResult();
+         var now = DateTime.Now;
+         int id = 0;
+         if (int.TryParse(raidBoss, out id)) {
+            if (!Mons.IsValidId(id)) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");
+               return result;
+            }
+         }
+         else {
+            id = Mons.GetIdByName(raidBoss);
+            if (id == 0) {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
+               return result;
+            }
+         }
+
+         raidTime = raidTime.Replace(".", ":").Replace(",", ":").Replace(";", ":");
+         DateTime time;
+         if (DateTime.TryParseExact(raidTime, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) {
+
+            Raid raid = new Raid() {
+               Name = raidName,
+               Time = time,
+               Users = new List<User>(),
+               CreateDateTime = now,
+               ExpireStart = now,
+               Expire = TimeSpan.FromMinutes(_permissions.AutoExpireMins),
+               RaidBossId = id
+            };
+            if (_permissions.JoinRaidOnCreate) {
+               raid.Users.Add(User.FromIUser(user, guests));
+            }
+            bool success = AddRaids(raid);
+            if (success) {
+               result.Success = true;
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder.AddField(x => {
+                  x.Name = "Raid succesfully created:";
+                  x.Value = raid.ToString();
+                  x.IsInline = false;
+               });
+               result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL, id));
+            }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
+            }
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that time. Try using a format of Hours:Mins e.g. `11:30`");
+         }
+         return result;
+      }
+
       public ModuleResult CreateRaid(string raidName, IUser user) {
          ModuleResult result = new ModuleResult();
          var now = DateTime.Now;
@@ -393,7 +448,7 @@ namespace RaidBot.BusinessLogic.Raids {
 
       public ModuleResult ChangeDate(string raidName, string raidDate, IGuildUser user) {
          var result = new ModuleResult();
-         
+
          DateTime date;
          if (DateTime.TryParseExact(raidDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date)) {
             var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));

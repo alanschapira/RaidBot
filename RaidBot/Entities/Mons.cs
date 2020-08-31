@@ -27,6 +27,7 @@ namespace RaidBot.Entities {
                return (id, textInfo.ToTitleCase(name), spriteUrl);
             }
             else {
+               name = GetCorrectName(name);
                mon = await pokeClient.GetResourceAsync<Pokemon>(name);
             }
          }
@@ -67,6 +68,64 @@ namespace RaidBot.Entities {
                "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Images/Raids/raid_egg_3_icon_notification.png"
             )}
          };
+      }
+
+      private static string GetCorrectName(string name) {
+         string newName = name;
+
+         var forms = new Dictionary<string, string>() {
+            {"mega", "mega"},
+            {"alolan", "alola"},
+            {"galarian", "galar"},
+            {"alola", "alola"},
+            {"galar", "galar"},
+            {"zen", "zen"},
+            {"normal", "normal"},
+            {"speed", "speed"},
+            {"attack", "attack"},
+            {"defense", "defense"},
+            {"defence", "defense"},
+            {"altered", "altered"},
+            {"rainy", "rainy"},
+            {"snowy", "snowy"},
+            {"sunny", "sunny"},
+            {"black", "black"},
+            {"white", "white"},
+            {"ordinary", "ordinary"},
+            {"resolute", "resolute"},
+            {"therian", "therian"},
+            {"incarnate", "incarnate"}
+         };
+         var otherNames = new Dictionary<string, string>() {
+            {"mega-charizard-x", "charizard-mega-x"},
+            {"mega-charizard-y", "charizard-mega-y"},
+            {"mega-charizard", "charizard-mega-x"},
+            {"charizard-mega", "charizard-mega-x"},
+            {"mega-mewtwo-x", "mewtwo-mega-x"},
+            {"mega-mewtwo-y", "mewtwo-mega-y"},
+            {"mega-mewtwo", "mewtwo-mega-x"},
+            {"mewtwo-mega", "mewtwo-mega-x"},
+            {"giratina", "giratina-altered"},
+            {"deoxys", "deoxys-normal"},
+            {"darmanitan", "darmanitan-standard"},
+            {"tornadus", "tornadus-incarnate"},
+            {"thundurus", "thundurus-incarnate"},
+            {"landorus", "landorus-incarnate"},
+            {"rainy", "rainy"},
+            {"snowy", "snowy"},
+            {"sunny", "sunny"}
+         };
+
+         if (otherNames.ContainsKey(newName)) {
+            return otherNames[newName];
+         }
+
+         string[] nameSplit = newName.Split('-');
+         if (forms.ContainsKey(nameSplit[0])) {
+            newName = nameSplit[1] + '-' + forms[nameSplit[0]];
+         }
+
+         return newName;
       }
    }
 }

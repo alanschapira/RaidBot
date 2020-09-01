@@ -13,7 +13,7 @@ namespace RaidBot.Entities {
 
          int id;
          string name;
-         string spriteUrl;
+         string spriteUrl = null;
          TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
 
          Pokemon mon;
@@ -41,8 +41,7 @@ namespace RaidBot.Entities {
             spriteUrl = form.Sprites.FrontDefault;
          }
          catch (Exception e) {
-            // Do not error on missing sprite; instead, return null
-            spriteUrl = null;
+            // Do not error on missing sprite
          }
 
          return (mon.Id, textInfo.ToTitleCase(mon.Name), spriteUrl);

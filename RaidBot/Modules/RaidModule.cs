@@ -142,11 +142,13 @@ namespace RaidBot.Modules {
 
       [Command("Create"), Summary("Creates a Raid")]
       [Alias("Add", "New")]
-      public async Task Create([Summary("The name of the raid")] string raidName, [Summary("The time of the raid")] string raidTime, [Summary("The name or id of the raid boss")]string raidBoss, [Summary("The number of guests to add to the initial attendee (if autojoin is set to on)")]int guests = 0) {
+      public async Task Create([Summary("The name of the raid")] string raidName, [Summary("The time of the raid")] string raidTime, [Summary("The name or id of the raid boss")] string raidBoss, [Summary("The number of guests to add to the initial attendee (if autojoin is set to on)")] int guests = 0) {
          var user = Context.User as IGuildUser;
 
+
+
          if (await CheckPermission(user, _serverPermissions)) {
-            var result = _raidService.CreateRaid(raidName, raidTime, raidBoss, Context.User, guests);
+            var result = await _raidService.CreateRaid(raidName, raidTime, raidBoss, Context.User, guests);
 
             if (result.Success) {
                await ReplyAsync("", false, result.RequesterUserBuilder.Build());
@@ -165,7 +167,7 @@ namespace RaidBot.Modules {
          var user = Context.User as IGuildUser;
 
          if (await CheckPermission(user, _serverPermissions)) {
-            var result = _raidService.AddPokemon(raidName, pokemonName, user);
+            var result = await _raidService.AddPokemon(raidName, pokemonName, user);
 
             if (result.Success) {
                await ReplyAsync("", false, result.RequesterUserBuilder.Build());

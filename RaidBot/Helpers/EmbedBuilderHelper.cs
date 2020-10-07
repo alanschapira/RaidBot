@@ -11,16 +11,10 @@ namespace RaidBot.Helpers {
       public static EmbedBuilder ErrorBuilder(string errorMessage) {
          var builder = new EmbedBuilder() {
             Color = new Color(255, 0, 51),
+            Title = "The following error occured:",
+            Description = errorMessage,
          };
-
-         builder.AddField(x => {
-            x.Name = "The following error occured:";
-            x.Value = errorMessage;
-            x.IsInline = false;
-         });
-
          return builder;
-
       }
 
       public static EmbedBuilder GreenBuilder() {
@@ -42,11 +36,7 @@ namespace RaidBot.Helpers {
          }
 
          EmbedBuilder builder = BlueBuilder();
-         builder.AddField(x => {
-            x.Name = header;
-            x.Value = result.ToString();
-            x.IsInline = false;
-         });
+         builder.WithTitle(header).WithDescription(result.ToString());
 
          return builder;
       }

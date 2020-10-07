@@ -38,7 +38,7 @@ namespace RaidBot.Entities {
       public override string ToString() {
          string time = Time?.ToString("HH:mm");
          string day = Day?.ToString("yyyy'-'MM'-'dd");
-         string result = $"{Name} {day} {time} {RaidBossName} (Expires {ToStringExpire()}) ({UserCount} Attendees)";
+         string result = $"{Name} {day} {time} {RaidBossName} (Expires {ToStringExpire()}) ({UserCount} attendee{(UserCount == 1 ? "" : "s")})";
          return Regex.Replace(result, @"\s+", " "); ;
       }
 

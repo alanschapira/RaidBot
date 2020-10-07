@@ -38,12 +38,7 @@ namespace RaidBot.Modules {
          _permissionService.SetAdminRights(permission);
 
          var builder = EmbedBuilderHelper.GreenBuilder();
-
-         builder.AddField(x => {
-            x.Name = "Setting: Create Raid Permission";
-            x.Value = $"Setting has been changed to: {permissionLevel}";
-            x.IsInline = false;
-         });
+         builder.WithTitle("Setting: Create Raid Permission").WithDescription($"Setting has been changed to: {permissionLevel}");
 
          await dmChannel.SendMessageAsync("", false, builder.Build());
       }
@@ -57,12 +52,7 @@ namespace RaidBot.Modules {
          _permissionService.SetJoinRaidOnCreatePermission(shouldJoin);
 
          var builder = EmbedBuilderHelper.GreenBuilder();
-
-         builder.AddField(x => {
-            x.Name = "Setting: Should Join Raid On Raid Creation";
-            x.Value = $"Setting has been changed to: {shouldJoin}";
-            x.IsInline = false;
-         });
+         builder.WithTitle("Setting: Should Join Raid On Raid Creation").WithDescription($"Setting has been changed to: {shouldJoin}");
 
          await dmChannel.SendMessageAsync("", false, builder.Build());
       }
@@ -76,12 +66,7 @@ namespace RaidBot.Modules {
          _permissionService.SetAutoDeleteRaid(mins);
 
          var builder = EmbedBuilderHelper.GreenBuilder();
-
-         builder.AddField(x => {
-            x.Name = "Setting: AutoDeleteRaid";
-            x.Value = $"Setting has been changed to: {mins} mins";
-            x.IsInline = false;
-         });
+         builder.WithTitle("Setting: AutoDeleteRaid").WithDescription($"Setting has been changed to: {mins} mins");
 
          await dmChannel.SendMessageAsync("", false, builder.Build());
       }
@@ -94,13 +79,7 @@ namespace RaidBot.Modules {
          ServerSettings settings = _permissionService.GetSettings();
 
          var builder = EmbedBuilderHelper.GreenBuilder();
-
-
-         builder.AddField(x => {
-            x.Name = "Current Settings:";
-            x.Value = settings.ToString();
-            x.IsInline = false;
-         });
+         builder.WithTitle("Current Settings:").WithDescription(settings.ToString());
 
          await dmChannel.SendMessageAsync("", false, builder.Build());
       }

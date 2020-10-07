@@ -7,7 +7,6 @@
     <add key="StorageConnectionString" value="DefaultEndpointsProtocol=https;AccountName=[YourAccountName];AccountKey=[YourAccountKey];EndpointSuffix=core.windows.net" />
     <add key="Token.Debug" value="[YourDebugToken]"/>
     <add key="Token.Release" value="[YourReleaseToken]"/>
-    <add key="PokemonIconURL" value="https://pkmref.com/images/set_1/{0}.png"/>
   </appSettings>
   <runtime>
     <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">

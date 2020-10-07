@@ -18,6 +18,8 @@ namespace RaidBot.Entities {
       public List<User> Users { get; set; }
       public DateTime CreateDateTime { get; set; }
       public int RaidBossId { get; set; }
+      public string RaidBossName { get; set; }
+      public string RaidBossSpriteUrl { get; set; }
 
 
       #region Methods
@@ -36,8 +38,7 @@ namespace RaidBot.Entities {
       public override string ToString() {
          string time = Time?.ToString("HH:mm");
          string day = Day?.ToString("yyyy'-'MM'-'dd");
-         string raidBoss = RaidBossId == 0 ? string.Empty : Mons.GetNameById(RaidBossId);
-         string result = $"{Name} {day} {time} {raidBoss} (Expires {ToStringExpire()}) ({UserCount} Attendees)";
+         string result = $"{Name} {day} {time} {RaidBossName} (Expires {ToStringExpire()}) ({UserCount} Attendees)";
          return Regex.Replace(result, @"\s+", " "); ;
       }
 

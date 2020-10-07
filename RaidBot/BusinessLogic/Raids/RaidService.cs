@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Threading.Tasks;
 using System.Globalization;
 using Discord;
 using RaidBot.Entities;
@@ -86,25 +87,17 @@ namespace RaidBot.BusinessLogic.Raids {
          return result;
       }
 
-      public ModuleResult AddPokemon(string raidName, string raidBoss, IGuildUser user) {
+      public async Task<ModuleResult> AddPokemon(string raidName, string raidBoss, IGuildUser user) {
          var result = new ModuleResult();
-         string newRaidBossName;
-
-         int raidBossId = 0;
-         if (int.TryParse(raidBoss, out raidBossId)) {
-            if (!Mons.IsValidId(raidBossId)) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");
-               return result;
-            }
-            newRaidBossName = Mons.GetNameById(raidBossId);
+         int raidBossId;
+         string raidBossName;
+         string raidBossSpriteUrl;
+         try {
+            (raidBossId, raidBossName, raidBossSpriteUrl) = await Mons.GetMonInfo(raidBoss);
          }
-         else {
-            raidBossId = Mons.GetIdByName(raidBoss);
-            if (raidBossId == 0) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
-               return result;
-            }
-            newRaidBossName = raidBoss;
+         catch (Exception e) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
+            return result;
          }
 
          var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
@@ -112,7 +105,7 @@ namespace RaidBot.BusinessLogic.Raids {
          if (raids.Count() == 1) {
             var raid = raids.Single();
             if (raid.RaidBossId == raidBossId) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder($"That raid already has a raidboss of: { Mons.GetNameById(raidBossId)}");
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder($"That raid already has a raidboss of: {raidBossName}");
                return result;
             }
             if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
@@ -120,13 +113,15 @@ namespace RaidBot.BusinessLogic.Raids {
                var allRaids = _raidFileService.GetRaidsFromFile();
                var oldRaidBossId = allRaids.Single(a => a.Equals(raid)).RaidBossId;
                allRaids.Single(a => a.Equals(raid)).RaidBossId = raidBossId;
+               allRaids.Single(a => a.Equals(raid)).RaidBossName = raidBossName;
+               allRaids.Single(a => a.Equals(raid)).RaidBossSpriteUrl = raidBossSpriteUrl;
                _raidFileService.PushRaidsToFile(allRaids);
 
-               string raidBossMessage = oldRaidBossId == 0 ? $"Raidboss has been changed to {newRaidBossName}" : $"Raidboss has been changed from {Mons.GetNameById(oldRaidBossId)} to {newRaidBossName}";
+               string raidBossMessage = oldRaidBossId == 0 ? $"Raidboss has been changed to {raidBossName}" : $"Raidboss has been changed from {raid.RaidBossName} to {raidBossName}";
 
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL, raidBossId));
+               result.RequesterUserBuilder.WithThumbnailUrl(raidBossSpriteUrl);
                result.RequesterUserBuilder.AddField(x => {
                   x.Name = $"Raid: {raidName}";
                   x.Value = raidBossMessage;
@@ -221,24 +216,20 @@ namespace RaidBot.BusinessLogic.Raids {
 
       }
 
-      public ModuleResult CreateRaid(string raidName, string raidTime, string raidBoss, IUser user, int guests) {
+      public async Task<ModuleResult> CreateRaid(string raidName, string raidTime, string raidBoss, IUser user, int guests) {
          ModuleResult result = new ModuleResult();
-         var now = DateTime.Now;
-         int id = 0;
-         if (int.TryParse(raidBoss, out id)) {
-            if (!Mons.IsValidId(id)) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid raid boss Id");
-               return result;
-            }
+         int raidBossId;
+         string raidBossName;
+         string raidBossSpriteUrl;
+         try {
+            (raidBossId, raidBossName, raidBossSpriteUrl) = await Mons.GetMonInfo(raidBoss);
          }
-         else {
-            id = Mons.GetIdByName(raidBoss);
-            if (id == 0) {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
-               return result;
-            }
+         catch (Exception e) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot recognise raid boss. Check your spelling!");
+            return result;
          }
 
+         var now = DateTime.Now;
          raidTime = raidTime.Replace(".", ":").Replace(",", ":").Replace(";", ":");
          DateTime time;
          if (DateTime.TryParseExact(raidTime, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) {
@@ -250,7 +241,9 @@ namespace RaidBot.BusinessLogic.Raids {
                CreateDateTime = now,
                ExpireStart = now,
                Expire = TimeSpan.FromMinutes(_permissions.AutoExpireMins),
-               RaidBossId = id
+               RaidBossId = raidBossId,
+               RaidBossName = raidBossName,
+               RaidBossSpriteUrl = raidBossSpriteUrl
             };
             if (_permissions.JoinRaidOnCreate) {
                raid.Users.Add(User.FromIUser(user, guests));
@@ -264,7 +257,7 @@ namespace RaidBot.BusinessLogic.Raids {
                   x.Value = raid.ToString();
                   x.IsInline = false;
                });
-               result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL, id));
+               result.RequesterUserBuilder.WithThumbnailUrl(raidBossSpriteUrl);
             }
             else {
                result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
@@ -540,7 +533,7 @@ namespace RaidBot.BusinessLogic.Raids {
 
             result.Success = true;
             result.RequesterUserBuilder = EmbedBuilderHelper.BlueBuilder();
-            result.RequesterUserBuilder.WithThumbnailUrl(string.Format(ConfigVariables.PokemonIconURL, raid.RaidBossId));
+            result.RequesterUserBuilder.WithThumbnailUrl(raid.RaidBossSpriteUrl);
             result.RequesterUserBuilder.AddField(x => {
                x.Name = $"Raid: {raid.ToString()}";
                x.Value = raid.ToStringUsers();

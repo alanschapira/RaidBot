@@ -50,28 +50,21 @@ namespace RaidBot.BusinessLogic.Raids {
                result.Success = true;
                if (requestUser != null) {
                   result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  string withGuests = guests == 0 ? string.Empty : $"with {guests} guest{(guests == 1 ? "" : "s")}";
+                  result.RequesterUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"You have added {forUser.Username} to the raid {withGuests}");
 
-                  string withGuests = guests == 0 ? string.Empty : $"with {guests} guests";
-
-                  result.RequesterUserBuilder.AddField(x => {
-                     x.Name = $"Raid: {raidName}";
-                     x.Value = $"You have added {forUser.Username} to the raid {withGuests}";
-                     x.IsInline = false;
-                  });
                   result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.ReferenceUserBuilder.AddField(x => {
-                     x.Name = $"Raid: {raidName}";
-                     x.Value = $"You have been added to the raid by {requestUser.Username} {withGuests}";
-                     x.IsInline = false;
-                  });
+                  result.ReferenceUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"You have been added to the raid by {requestUser.Username} {withGuests}");
                }
                else {
                   result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.RequesterUserBuilder.AddField(x => {
-                     x.Name = $"Raid: {raidName}";
-                     x.Value = $"You have been added to the raid";
-                     x.IsInline = false;
-                  });
+                  result.RequesterUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"You have been added to the raid");
                }
             }
             else {
@@ -121,12 +114,10 @@ namespace RaidBot.BusinessLogic.Raids {
 
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.WithThumbnailUrl(raidBossSpriteUrl);
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raidName}";
-                  x.Value = raidBossMessage;
-                  x.IsInline = false;
-               });
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription(raidBossMessage)
+                  .WithThumbnailUrl(raidBossSpriteUrl);
             }
             else {
                result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the raidboss");
@@ -179,11 +170,9 @@ namespace RaidBot.BusinessLogic.Raids {
 
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raidName}";
-                  x.Value = "This raid has been deleted";
-                  x.IsInline = false;
-               });
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription("This raid has been deleted");
             }
             else {
                result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
@@ -252,12 +241,10 @@ namespace RaidBot.BusinessLogic.Raids {
             if (success) {
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = "Raid succesfully created:";
-                  x.Value = raid.ToString();
-                  x.IsInline = false;
-               });
-               result.RequesterUserBuilder.WithThumbnailUrl(raidBossSpriteUrl);
+               result.RequesterUserBuilder
+                  .WithTitle("Raid succesfully created:")
+                  .WithDescription(raid.ToString())
+                  .WithThumbnailUrl(raidBossSpriteUrl);
             }
             else {
                result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
@@ -287,11 +274,9 @@ namespace RaidBot.BusinessLogic.Raids {
          if (success) {
             result.Success = true;
             result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-            result.RequesterUserBuilder.AddField(x => {
-               x.Name = "Raid succesfully created:";
-               x.Value = raid.ToString();
-               x.IsInline = false;
-            });
+            result.RequesterUserBuilder
+               .WithTitle("Raid succesfully created:")
+               .WithDescription(raid.ToString());
          }
          else {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
@@ -307,11 +292,9 @@ namespace RaidBot.BusinessLogic.Raids {
             result.Users = raids.Single().Users;
             result.Success = true;
             result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-            result.RequesterUserBuilder.AddField(x => {
-               x.Name = $"Raid: {raidName}";
-               x.Value = message;
-               x.IsInline = false;
-            });
+            result.RequesterUserBuilder
+               .WithTitle($"Raid: {raidName}")
+               .WithDescription(message);
          }
          else if (raids.Count() == 0) {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
@@ -337,11 +320,9 @@ namespace RaidBot.BusinessLogic.Raids {
 
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {newRaidName}";
-                  x.Value = $"Name has been changed from {raidName} to {newRaidName}";
-                  x.IsInline = false;
-               });
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {newRaidName}")
+                  .WithDescription($"Name has been changed from {raidName} to {newRaidName}");
             }
             else {
                result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the name");
@@ -364,26 +345,24 @@ namespace RaidBot.BusinessLogic.Raids {
 
          if (raids.Count() == 1) {
             var raid = raids.Single();
-            if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
+               if (user.GuildPermissions.Has(GuildPermission.ManageMessages) || raid.Users.FirstOrDefault().Equals(User.FromIUser(user))) {
 
-               result.Users = raid.Users;
-               var allRaids = _raidFileService.GetRaidsFromFile();
-               var expireTimeSpan = TimeSpan.FromMinutes(expire);
-               allRaids.Single(a => a.Equals(raid)).Expire = expireTimeSpan;
-               allRaids.Single(a => a.Equals(raid)).ExpireStart = DateTime.Now;
-               _raidFileService.PushRaidsToFile(allRaids);
+                  result.Users = raid.Users;
+                  var allRaids = _raidFileService.GetRaidsFromFile();
+                  var expireTimeSpan = TimeSpan.FromMinutes(expire);
+                  allRaids.Single(a => a.Equals(raid)).Expire = expireTimeSpan;
+                  allRaids.Single(a => a.Equals(raid)).ExpireStart = DateTime.Now;
+                  _raidFileService.PushRaidsToFile(allRaids);
 
-               result.Success = true;
-               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raidName}";
-                  x.Value = $"Raid will now expire in {allRaids.Single(a => a.Equals(raid)).ToStringExpire()}";
-                  x.IsInline = false;
-               });
-            }
-            else {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
-            }
+                  result.Success = true;
+                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.RequesterUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"Raid will now expire in {allRaids.Single(a => a.Equals(raid)).ToStringExpire()}");
+               }
+               else {
+                  result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can delete a raid");
+               }
          }
          else if (raids.Count() == 0) {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
@@ -415,12 +394,10 @@ namespace RaidBot.BusinessLogic.Raids {
 
                   result.Success = true;
                   result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.RequesterUserBuilder.AddField(x => {
-                     x.Name = $"Raid: {raidName}";
-                     x.Value = $"Time has been changed to {time.ToString("H:mm")}";
-                     x.IsInline = false;
-                  });
-               }
+                  result.RequesterUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"Time has been changed to {time.ToString("H:mm")}");
+                  }
                else {
                   result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the time");
                }
@@ -457,12 +434,10 @@ namespace RaidBot.BusinessLogic.Raids {
 
                   result.Success = true;
                   result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.RequesterUserBuilder.AddField(x => {
-                     x.Name = $"Raid: {raidName}";
-                     x.Value = $"Date has been changed to {date.ToString("yyyy'-'MM'-'dd")}\nPlease note you will need to change the expire seperately";
-                     x.IsInline = false;
-                  });
-               }
+                  result.RequesterUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"Date has been changed to {date.ToString("yyyy'-'MM'-'dd")}\nPlease note you will need to change the expire seperately");
+                  }
                else {
                   result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the date");
                }
@@ -491,28 +466,23 @@ namespace RaidBot.BusinessLogic.Raids {
             UpdateRaidWithDifferentUsers(raid);
             result.Success = true;
 
-            if (userToAddGuests == null) {
+            if (requestUser == null || requestUser == null) {
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raidName}";
-                  x.Value = $"Added {guests} guests";
-                  x.IsInline = false;
-               });
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription($"Added {guests} guest{(guests == 1 ? "" : "s")}");
             }
             else {
-               result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.ReferenceUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raidName}";
-                  x.Value = $"Added {guests} guests for {userToAddGuests.Username}";
-                  x.IsInline = false;
-               });
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raidName}";
-                  x.Value = $"{requestUser} has added {guests} guests to the raid for you.";
-                  x.IsInline = false;
-               });
-            }
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription($"Added {guests} guest{(guests == 1 ? "" : "s")} for {userToAddGuests.Username}");
+
+               result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.ReferenceUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription($"{requestUser.Username} has added {guests} guest{(guests == 1 ? "" : "s")} to the raid for you");
+             }
          }
          else if (raids.Count() == 0) {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
@@ -533,13 +503,11 @@ namespace RaidBot.BusinessLogic.Raids {
 
             result.Success = true;
             result.RequesterUserBuilder = EmbedBuilderHelper.BlueBuilder();
-            result.RequesterUserBuilder.WithThumbnailUrl(raid.RaidBossSpriteUrl);
-            result.RequesterUserBuilder.AddField(x => {
-               x.Name = $"Raid: {raid.ToString()}";
-               x.Value = raid.ToStringUsers();
-               x.IsInline = false;
-            });
-         }
+            result.RequesterUserBuilder
+               .WithTitle($"Raid: {raid.ToString()}")
+               .WithDescription(raid.ToStringUsers())
+               .WithThumbnailUrl(raid.RaidBossSpriteUrl);
+            }
          else if (raids.Count() == 0) {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Could not find that raid");
          }
@@ -586,25 +554,20 @@ namespace RaidBot.BusinessLogic.Raids {
 
             if (referenceUser != null) {
                result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.ReferenceUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raid.Name}";
-                  x.Value = $"You have been removed from the raid by {requesterUser.Username}";
-                  x.IsInline = false;
-               });
+               result.ReferenceUserBuilder
+                  .WithTitle($"Raid: {raid.Name}")
+                  .WithDescription($"You have been removed from the raid by {requesterUser.Username}");
+
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raid.Name}";
-                  x.Value = $"You have removed {referenceUser.Username} from the raid";
-                  x.IsInline = false;
-               });
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raid.Name}")
+                  .WithDescription($"You have removed {referenceUser.Username} from the raid");
             }
             else {
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-               result.RequesterUserBuilder.AddField(x => {
-                  x.Name = $"Raid: {raid.Name}";
-                  x.Value = "You have been removed from the raid";
-                  x.IsInline = false;
-               });
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raid.Name}")
+                  .WithDescription("You have been removed from the raid");
             }
 
          }

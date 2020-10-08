@@ -26,7 +26,7 @@ namespace RaidBot.Modules {
          string prefix = "$";  /* put your chosen prefix here */
          var builder = new EmbedBuilder() {
             Color = new Color(114, 137, 218),
-            Description = "These are the commands you can use:"
+            Description = "**These are the commands you can use:**"
          };
 
          foreach (var module in _service.Modules.OrderByDescending(a => a.Name)) /* we are now going to loop through the modules taken from the service we initiated earlier ! */

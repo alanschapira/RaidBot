@@ -29,7 +29,7 @@ namespace RaidBot.Modules {
          await ReplyAsync("", false, result.Build());
       }
 
-      [Command("Get"), Summary("Gets the details of a Raid")]
+      [Command("Get"), Summary("Gets the details of a raid")]
       [Alias("Info", "Raid")]
       public async Task Get([Summary("The name of the raid")] string raidName) {
 
@@ -43,11 +43,11 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Join"), Summary("Joins a Raid")]
+      [Command("Join"), Summary("Joins a raid")]
       [Alias("Attend")]
       public async Task Join([Summary("The name of the raid")] string raidName, [Summary("Number of guests")] int guests = 0) {
 
-         var result = _raidService.JoinRaid(raidName, Context.User, guests);
+         var result = _raidService.JoinRaid(raidName, Context.User, guests, false);
          var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
          await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
       }
@@ -58,7 +58,7 @@ namespace RaidBot.Modules {
 
          var requesterUser = Context.User as IGuildUser;
          if (await CheckPermission(user, requesterUser, _serverPermissions)) {
-            var result = _raidService.JoinRaid(raidName, user, guests, Context.User);
+            var result = _raidService.JoinRaid(raidName, user, guests, false, Context.User);
 
             var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
             await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
@@ -70,7 +70,34 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Leave"), Summary("Leaves a Raid")]
+      [Command("Remote"), Summary("Joins a raid as a remote attendee")]
+      [Alias("JoinRemote", "AttendRemote")]
+      public async Task Remote([Summary("The name of the raid")] string raidName, [Summary("Number of guests")] int guests = 0) {
+
+         var result = _raidService.JoinRaid(raidName, Context.User, guests, true);
+         var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
+         await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+      }
+
+      [Command("Remote"), Summary("Adds a user to a raid as a remote attendee")]
+      [Alias("JoinRemote", "AttendRemote", "AddUserRemote")]
+      public async Task Remote([Summary("The name of the raid")] string raidName, [Summary("Mention the user you want to add")] IUser user, [Summary("Number of guests")] int guests = 0) {
+
+         var requesterUser = Context.User as IGuildUser;
+         if (await CheckPermission(user, requesterUser, _serverPermissions)) {
+            var result = _raidService.JoinRaid(raidName, user, guests, true, Context.User);
+
+            var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
+            await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+
+            if (result.Success) {
+               var dmChannelRequester = await user.GetOrCreateDMChannelAsync();
+               await dmChannelRequester.SendMessageAsync("", false, result.ReferenceUserBuilder.Build());
+            }
+         }
+      }
+
+      [Command("Leave"), Summary("Leaves a raid")]
       [Alias("Unattend")]
       public async Task Leave([Summary("The name of the raid")] string raidName, IUser user = null) {
 
@@ -87,7 +114,6 @@ namespace RaidBot.Modules {
       }
 
 
-
       [Command("MyRaids"), Summary("Gets your raids")]
       [Alias("Me")]
       public async Task MyRaids(IUser user = null) {
@@ -97,7 +123,7 @@ namespace RaidBot.Modules {
          await dmChannel.SendMessageAsync("", false, result.Build());
       }
 
-      [Command("AddGuests"), Summary("Add guests to youself or another")]
+      [Command("AddGuests"), Summary("Add guests to youself or another user")]
       [Alias("AddGuest", "Guest", "Guests")]
       public async Task AddGuests([Summary("The name of the raid")] string raidName, int guests, IUser user = null) {
 
@@ -121,7 +147,7 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Create"), Summary("Creates a Raid")]
+      [Command("Create"), Summary("Creates a raid")]
       [Alias("Add", "New")]
       public async Task Create(
          [Summary("The name of the raid")] string raidName) {
@@ -140,7 +166,7 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Create"), Summary("Creates a Raid")]
+      [Command("Create"), Summary("Creates a raid")]
       [Alias("Add", "New")]
       public async Task Create([Summary("The name of the raid")] string raidName, [Summary("The time of the raid")] string raidTime, [Summary("The name or id of the raid boss")] string raidBoss, [Summary("The number of guests to add to the initial attendee (if autojoin is set to on)")] int guests = 0) {
          var user = Context.User as IGuildUser;
@@ -235,7 +261,7 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Message"), Summary("Message everyone in a raid")]
+      [Command("Message"), Summary("Messages everyone in a raid")]
       public async Task Message([Summary("The name of the raid")] string raidName, [Summary("The message"), Remainder] string message) {
          var requesterUser = Context.User as IGuildUser;
          var result = _raidService.MessageUsers(raidName, message);
@@ -248,8 +274,22 @@ namespace RaidBot.Modules {
          }
       }
 
+      [Command("Go"), Summary("Informs everyone in a raid that the raid is starting")]
+      [Alias("Start", "Lobby")]
+      public async Task Go([Summary("The name of the raid")] string raidName) {
+         var requesterUser = Context.User as IGuildUser;
+         var result = _raidService.MessageUsers(raidName, $"The raid is starting now. Please go to the lobby");
+         if (result.Success) {
+            MessageAllUsers(result);
+         }
+         else {
+            var dmChannel = await requesterUser.GetOrCreateDMChannelAsync();
+            await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+         }
+      }
 
-      [Command("Delete"), Summary("Deletes a Raid")]
+
+      [Command("Delete"), Summary("Deletes a raid")]
       [Alias("Remove", "Destroy")]
       public async Task Delete([Summary("The name of the raid")] string raidName) {
 
@@ -263,6 +303,36 @@ namespace RaidBot.Modules {
                var dmChannel = await user.GetOrCreateDMChannelAsync();
                await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
             }
+         }
+      }
+
+      [Command("Mode"), Summary("Changes the attendance mode for yourself or another user")]
+      [Alias("Attendance")]
+      public async Task Mode([Summary("The name of the raid")] string raidName, string attendanceMode, IUser user = null) {
+
+         var requesterUser = Context.User as IGuildUser;
+         if (await CheckPermission(user, requesterUser, _serverPermissions)) {
+            var result = _raidService.ChangeAttendanceMode(raidName, attendanceMode, Context.User, user);
+            var dmChannel = await requesterUser.GetOrCreateDMChannelAsync();
+            await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
+            if (user != null) {
+               var dmChannelReferenceUser = await user.GetOrCreateDMChannelAsync();
+               await dmChannelReferenceUser.SendMessageAsync("", false, result.ReferenceUserBuilder.Build());
+            }
+         }
+      }
+
+      [Command("Invites"), Summary("Prints the invite string including all remote raiders except the leader")]
+      [Alias("Invite", "InvitesString", "InviteString")]
+      public async Task Invites([Summary("The name of the raid")] string raidName) {
+
+         var result = _raidService.GetInvitesString(raidName);
+         if (result.Success) {
+            await ReplyAsync(result.Message, false);
+         }
+         else {
+            var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
+            await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
          }
       }
 

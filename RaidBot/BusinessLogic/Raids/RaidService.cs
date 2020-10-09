@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
 using Discord;
@@ -37,34 +38,39 @@ namespace RaidBot.BusinessLogic.Raids {
          raid.Users.Add(User.FromIUser(user, guests));
       }
 
-      public ModuleResult JoinRaid(string raidName, IUser forUser, int guests, IUser requestUser = null) {
+      public ModuleResult JoinRaid(string raidName, IUser forUser, int guests, bool isRemote, IUser requestUser = null) {
 
          ModuleResult result = new ModuleResult();
 
          var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
 
          if (raids.Count() == 1) {
-            bool success = AddUserToRaidIfNotExists(raids.Single(), forUser, guests);
+            bool success = AddUserToRaidIfNotExists(raids.Single(), forUser, guests, isRemote);
 
             if (success) {
                result.Success = true;
+
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               string withGuests = guests == 0 ? string.Empty : $"with {guests} guest{(guests == 1 ? "" : "s")}";
+               string asRemoteAttendee = isRemote ? " as a remote attendee" : string.Empty;
+
                if (requestUser != null) {
-                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  string withGuests = guests == 0 ? string.Empty : $"with {guests} guest{(guests == 1 ? "" : "s")}";
+                  var forUserUsername = (forUser as IGuildUser).Nickname ?? forUser.Username;
+                  var requestUserUsername = (requestUser as IGuildUser).Nickname ?? requestUser.Username;
+
                   result.RequesterUserBuilder
                      .WithTitle($"Raid: {raidName}")
-                     .WithDescription($"You have added {forUser.Username} to the raid {withGuests}");
+                     .WithDescription($"You have added {forUserUsername} to the raid{asRemoteAttendee} {withGuests}");
 
                   result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
                   result.ReferenceUserBuilder
                      .WithTitle($"Raid: {raidName}")
-                     .WithDescription($"You have been added to the raid by {requestUser.Username} {withGuests}");
+                     .WithDescription($"You have been added to the raid{asRemoteAttendee} by {requestUserUsername} {withGuests}");
                }
                else {
-                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
                   result.RequesterUserBuilder
                      .WithTitle($"Raid: {raidName}")
-                     .WithDescription($"You have been added to the raid");
+                     .WithDescription($"You have been added to the raid{asRemoteAttendee}");
                }
             }
             else {
@@ -110,7 +116,7 @@ namespace RaidBot.BusinessLogic.Raids {
                allRaids.Single(a => a.Equals(raid)).RaidBossSpriteUrl = raidBossSpriteUrl;
                _raidFileService.PushRaidsToFile(allRaids);
 
-               string raidBossMessage = oldRaidBossId == 0 ? $"Raidboss has been changed to {raidBossName}" : $"Raidboss has been changed from {raid.RaidBossName} to {raidBossName}";
+               string raidBossMessage = oldRaidBossId == 0 ? $"Raid boss has been changed to {raidBossName}" : $"Raid boss has been changed from {raid.RaidBossName} to {raidBossName}";
 
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
@@ -120,7 +126,7 @@ namespace RaidBot.BusinessLogic.Raids {
                   .WithThumbnailUrl(raidBossSpriteUrl);
             }
             else {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the raidboss");
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Only the leader can change the raid boss");
             }
          }
          else if (raids.Count() == 0) {
@@ -149,7 +155,7 @@ namespace RaidBot.BusinessLogic.Raids {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Could not find the user in that raid");
          }
          else {
-            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Somthing went wrong");
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Something went wrong");
          }
          return result;
       }
@@ -196,11 +202,13 @@ namespace RaidBot.BusinessLogic.Raids {
 
          var raidsFiltered = raids.Where(a => a.Users.Any(b => b.Equals(User.FromIUser(user))));
 
+         var username = (user as IGuildUser).Nickname ?? user.Username;
+
          if (raidsFiltered.Count() == 0) {
-            return EmbedBuilderHelper.ErrorBuilder($"{user.Username} is not attending any raids yet");
+            return EmbedBuilderHelper.ErrorBuilder($"{username} is not attending any raids yet");
          }
          else {
-            return EmbedBuilderHelper.RaidEmbedBuilder($"{user.Username} is attending:", raidsFiltered);
+            return EmbedBuilderHelper.RaidEmbedBuilder($"{username} is attending:", raidsFiltered);
          }
 
       }
@@ -473,15 +481,18 @@ namespace RaidBot.BusinessLogic.Raids {
                   .WithDescription($"Added {guests} guest{(guests == 1 ? "" : "s")}");
             }
             else {
+               var userToAddGuestsUsername = (userToAddGuests as IGuildUser).Nickname ?? userToAddGuests.Username;
+               var requestUserUsername = (requestUser as IGuildUser).Nickname ?? requestUser.Username;
+
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
                result.RequesterUserBuilder
                   .WithTitle($"Raid: {raidName}")
-                  .WithDescription($"Added {guests} guest{(guests == 1 ? "" : "s")} for {userToAddGuests.Username}");
+                  .WithDescription($"Added {guests} guest{(guests == 1 ? "" : "s")} for {userToAddGuestsUsername}");
 
                result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
                result.ReferenceUserBuilder
                   .WithTitle($"Raid: {raidName}")
-                  .WithDescription($"{requestUser.Username} has added {guests} guest{(guests == 1 ? "" : "s")} to the raid for you");
+                  .WithDescription($"{requestUserUsername} has added {guests} guest{(guests == 1 ? "" : "s")} to the raid for you");
              }
          }
          else if (raids.Count() == 0) {
@@ -526,16 +537,98 @@ namespace RaidBot.BusinessLogic.Raids {
          return EmbedBuilderHelper.RaidEmbedBuilder("All current raids:", raids);
       }
 
+      public ModuleResult ChangeAttendanceMode(string raidName, string attendanceMode, IUser requesterUser, IUser userToUpdate) {
+         var result = new ModuleResult();
+         var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+         if (raids.Count() == 1) {
+            string[] validModes = { "inperson", "in-person", "remote" };
+            if (Array.Exists(validModes, el => el == attendanceMode)) {
+               var raid = raids.Single();
+
+               if (userToUpdate == null) {
+                  raid.Users.Single(a => a.Equals(User.FromIUser(requesterUser))).IsRemoteAttendee = (attendanceMode == "remote");
+                  UpdateRaidWithDifferentUsers(raid);
+                  result.Success = true;
+
+                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.RequesterUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"Updated attendance mode to {attendanceMode}");
+               }
+               else {
+                  raid.Users.Single(a => a.Equals(User.FromIUser(userToUpdate))).IsRemoteAttendee = (attendanceMode == "remote");
+                  UpdateRaidWithDifferentUsers(raid);
+                  result.Success = true;
+
+                  var userToUpdateUsername = (userToUpdate as IGuildUser).Nickname ?? userToUpdate.Username;
+                  var requesterUserUsername = (requesterUser as IGuildUser).Nickname ?? requesterUser.Username;
+
+                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.RequesterUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"Updated attendance mode to {attendanceMode} for {userToUpdateUsername}");
+
+                  result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
+                  result.ReferenceUserBuilder
+                     .WithTitle($"Raid: {raidName}")
+                     .WithDescription($"{requesterUserUsername} has updated your attendance mode to {attendanceMode}");
+               }
+            }
+            else {
+               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid mode. Accepted modes are inperson and remote");
+            }
+         }
+         else if (raids.Count() == 0) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Cannot find raid");
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+         }
+         return result;
+      }
+
+      public ModuleResult GetInvitesString(string raidName) {
+
+         var result = new ModuleResult();
+         var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
+
+         if (raids.Count() == 1) {
+            var raid = raids.Single();
+            List<User> remoteUsers = raid.Users.Skip(1).Where(user => user.IsRemoteAttendee).ToList();
+            StringBuilder inviteString = new StringBuilder();
+
+            if (remoteUsers.Count() > 0) {
+               inviteString.Append($"{remoteUsers.First().Username}");
+               foreach (var user in remoteUsers.Skip(1)) {
+                  inviteString.Append($",{user.Username}");
+               }
+               result.Message = inviteString.ToString();
+            }
+            else {
+               result.Message = "No remote raiders to invite";
+            }
+
+            result.Success = true;
+         }
+         else if (raids.Count() == 0) {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Could not find that raid");
+         }
+         else {
+            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Unknown Error");
+         }
+         return result;
+      }
 
       #region Private Methods
 
 
-      private bool AddUserToRaidIfNotExists(Raid raid, IUser user, int guests) {
+      private bool AddUserToRaidIfNotExists(Raid raid, IUser user, int guests, bool isRemote) {
          if (raid.Users.Any(a => a.Equals(User.FromIUser(user)))) {
             return false;
          }
          else {
-            raid.Users.Add(User.FromIUser(user, guests));
+            raid.Users.Add(User.FromIUser(user, guests, isRemote));
             UpdateRaidWithDifferentUsers(raid);
             return true;//$"You have been added to raid: {raid.Name}";
          }
@@ -553,15 +646,18 @@ namespace RaidBot.BusinessLogic.Raids {
             result.Success = true;
 
             if (referenceUser != null) {
+               var requesterUserUsername = (requesterUser as IGuildUser).Nickname ?? requesterUser.Username;
+               var referenceUserUsername = (referenceUser as IGuildUser).Nickname ?? referenceUser.Username;
+
                result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
                result.ReferenceUserBuilder
                   .WithTitle($"Raid: {raid.Name}")
-                  .WithDescription($"You have been removed from the raid by {requesterUser.Username}");
+                  .WithDescription($"You have been removed from the raid by {requesterUserUsername}");
 
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
                result.RequesterUserBuilder
                   .WithTitle($"Raid: {raid.Name}")
-                  .WithDescription($"You have removed {referenceUser.Username} from the raid");
+                  .WithDescription($"You have removed {referenceUserUsername} from the raid");
             }
             else {
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();

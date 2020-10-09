@@ -11,7 +11,7 @@ namespace RaidBot.Helpers {
       public static EmbedBuilder ErrorBuilder(string errorMessage) {
          var builder = new EmbedBuilder() {
             Color = new Color(255, 0, 51),
-            Title = "The following error occured:",
+            Title = "The following error occurred:",
             Description = errorMessage,
          };
          return builder;

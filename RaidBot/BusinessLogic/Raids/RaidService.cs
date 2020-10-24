@@ -213,7 +213,7 @@ namespace RaidBot.BusinessLogic.Raids {
 
       }
 
-      public async Task<ModuleResult> CreateRaid(string raidName, string raidTime, string raidBoss, IUser user, int guests) {
+      public async Task<ModuleResult> CreateRaid(string raidName, string raidTime, string raidBoss, IUser user, int guests, bool isRemote) {
          ModuleResult result = new ModuleResult();
          int raidBossId;
          string raidBossName;
@@ -243,14 +243,14 @@ namespace RaidBot.BusinessLogic.Raids {
                RaidBossSpriteUrl = raidBossSpriteUrl
             };
             if (_permissions.JoinRaidOnCreate) {
-               raid.Users.Add(User.FromIUser(user, guests));
+               raid.Users.Add(User.FromIUser(user, guests, isRemote));
             }
             bool success = AddRaids(raid);
             if (success) {
                result.Success = true;
                result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
                result.RequesterUserBuilder
-                  .WithTitle("Raid succesfully created:")
+                  .WithTitle("Raid successfully created:")
                   .WithDescription(raid.ToString())
                   .WithThumbnailUrl(raidBossSpriteUrl);
             }
@@ -260,34 +260,6 @@ namespace RaidBot.BusinessLogic.Raids {
          }
          else {
             result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("I do not understand that time. Try using a format of Hours:Mins e.g. `11:30`");
-         }
-         return result;
-      }
-
-      public ModuleResult CreateRaid(string raidName, IUser user) {
-         ModuleResult result = new ModuleResult();
-         var now = DateTime.Now;
-
-         Raid raid = new Raid() {
-            Name = raidName,
-            Users = new List<User>(),
-            CreateDateTime = now,
-            ExpireStart = now,
-            Expire = TimeSpan.FromMinutes(_permissions.AutoExpireMins)
-         };
-         if (_permissions.JoinRaidOnCreate) {
-            raid.Users.Add(User.FromIUser(user));
-         }
-         bool success = AddRaids(raid);
-         if (success) {
-            result.Success = true;
-            result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-            result.RequesterUserBuilder
-               .WithTitle("Raid succesfully created:")
-               .WithDescription(raid.ToString());
-         }
-         else {
-            result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Raid already exists. Please join or create a different raid.");
          }
          return result;
       }
@@ -537,46 +509,41 @@ namespace RaidBot.BusinessLogic.Raids {
          return EmbedBuilderHelper.RaidEmbedBuilder("All current raids:", raids);
       }
 
-      public ModuleResult ChangeAttendanceMode(string raidName, string attendanceMode, IUser requesterUser, IUser userToUpdate) {
+      public ModuleResult ChangeAttendanceMode(string raidName, IUser requesterUser, IUser userToUpdate) {
          var result = new ModuleResult();
          var raids = _raidFileService.GetRaidsFromFile().Where(a => a.Name.Equals(raidName, StringComparison.CurrentCultureIgnoreCase));
 
          if (raids.Count() == 1) {
-            string[] validModes = { "inperson", "in-person", "remote" };
-            if (Array.Exists(validModes, el => el == attendanceMode)) {
-               var raid = raids.Single();
+            var raid = raids.Single();
+            if (userToUpdate == null) {
+               var user = raid.Users.Single(a => a.Equals(User.FromIUser(requesterUser)));
+               user.IsRemoteAttendee = !user.IsRemoteAttendee;
+               UpdateRaidWithDifferentUsers(raid);
+               result.Success = true;
 
-               if (userToUpdate == null) {
-                  raid.Users.Single(a => a.Equals(User.FromIUser(requesterUser))).IsRemoteAttendee = (attendanceMode == "remote");
-                  UpdateRaidWithDifferentUsers(raid);
-                  result.Success = true;
-
-                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.RequesterUserBuilder
-                     .WithTitle($"Raid: {raidName}")
-                     .WithDescription($"Updated attendance mode to {attendanceMode}");
-               }
-               else {
-                  raid.Users.Single(a => a.Equals(User.FromIUser(userToUpdate))).IsRemoteAttendee = (attendanceMode == "remote");
-                  UpdateRaidWithDifferentUsers(raid);
-                  result.Success = true;
-
-                  var userToUpdateUsername = (userToUpdate as IGuildUser).Nickname ?? userToUpdate.Username;
-                  var requesterUserUsername = (requesterUser as IGuildUser).Nickname ?? requesterUser.Username;
-
-                  result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.RequesterUserBuilder
-                     .WithTitle($"Raid: {raidName}")
-                     .WithDescription($"Updated attendance mode to {attendanceMode} for {userToUpdateUsername}");
-
-                  result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
-                  result.ReferenceUserBuilder
-                     .WithTitle($"Raid: {raidName}")
-                     .WithDescription($"{requesterUserUsername} has updated your attendance mode to {attendanceMode}");
-               }
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription($"Updated attendance mode to {(user.IsRemoteAttendee == true ? "remote" : "in person")}");
             }
             else {
-               result.RequesterUserBuilder = EmbedBuilderHelper.ErrorBuilder("Invalid mode. Accepted modes are inperson and remote");
+               var user = raid.Users.Single(a => a.Equals(User.FromIUser(userToUpdate)));
+               user.IsRemoteAttendee = !user.IsRemoteAttendee;
+               UpdateRaidWithDifferentUsers(raid);
+               result.Success = true;
+
+               var userToUpdateUsername = (userToUpdate as IGuildUser).Nickname ?? userToUpdate.Username;
+               var requesterUserUsername = (requesterUser as IGuildUser).Nickname ?? requesterUser.Username;
+
+               result.RequesterUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.RequesterUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription($"Updated attendance mode to {(user.IsRemoteAttendee == true ? "remote" : "in person")} for {userToUpdateUsername}");
+
+               result.ReferenceUserBuilder = EmbedBuilderHelper.GreenBuilder();
+               result.ReferenceUserBuilder
+                  .WithTitle($"Raid: {raidName}")
+                  .WithDescription($"{requesterUserUsername} has updated your attendance mode to {(user.IsRemoteAttendee == true ? "remote" : "in person")}");
             }
          }
          else if (raids.Count() == 0) {

@@ -147,14 +147,13 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Create"), Summary("Creates a raid")]
+      [Command("Create"), Summary("Creates a raid with the leader attending in person")]
       [Alias("Add", "New")]
-      public async Task Create(
-         [Summary("The name of the raid")] string raidName) {
+      public async Task Create([Summary("The name of the raid")] string raidName, [Summary("The time of the raid")] string raidTime, [Summary("The name or id of the raid boss")] string raidBoss, [Summary("The number of guests to add to the leader (if autojoin is set to on)")] int guests = 0) {
          var user = Context.User as IGuildUser;
 
          if (await CheckPermission(user, _serverPermissions)) {
-            var result = _raidService.CreateRaid(raidName, Context.User);
+            var result = await _raidService.CreateRaid(raidName, raidTime, raidBoss, Context.User, guests, false);
 
             if (result.Success) {
                await ReplyAsync("", false, result.RequesterUserBuilder.Build());
@@ -166,15 +165,13 @@ namespace RaidBot.Modules {
          }
       }
 
-      [Command("Create"), Summary("Creates a raid")]
-      [Alias("Add", "New")]
-      public async Task Create([Summary("The name of the raid")] string raidName, [Summary("The time of the raid")] string raidTime, [Summary("The name or id of the raid boss")] string raidBoss, [Summary("The number of guests to add to the initial attendee (if autojoin is set to on)")] int guests = 0) {
+      [Command("CreateRemote"), Summary("Creates a raid with the leader attending remotely")]
+      [Alias("AddRemote", "NewRemote")]
+      public async Task CreateRemote([Summary("The name of the raid")] string raidName, [Summary("The time of the raid")] string raidTime, [Summary("The name or id of the raid boss")] string raidBoss, [Summary("The number of guests to add to the leader (if autojoin is set to on)")] int guests = 0) {
          var user = Context.User as IGuildUser;
 
-
-
          if (await CheckPermission(user, _serverPermissions)) {
-            var result = await _raidService.CreateRaid(raidName, raidTime, raidBoss, Context.User, guests);
+            var result = await _raidService.CreateRaid(raidName, raidTime, raidBoss, Context.User, guests, true);
 
             if (result.Success) {
                await ReplyAsync("", false, result.RequesterUserBuilder.Build());
@@ -308,11 +305,11 @@ namespace RaidBot.Modules {
 
       [Command("Mode"), Summary("Changes the attendance mode for yourself or another user")]
       [Alias("Attendance")]
-      public async Task Mode([Summary("The name of the raid")] string raidName, string attendanceMode, IUser user = null) {
+      public async Task Mode([Summary("The name of the raid")] string raidName, IUser user = null) {
 
          var requesterUser = Context.User as IGuildUser;
          if (await CheckPermission(user, requesterUser, _serverPermissions)) {
-            var result = _raidService.ChangeAttendanceMode(raidName, attendanceMode, Context.User, user);
+            var result = _raidService.ChangeAttendanceMode(raidName, Context.User, user);
             var dmChannel = await requesterUser.GetOrCreateDMChannelAsync();
             await dmChannel.SendMessageAsync("", false, result.RequesterUserBuilder.Build());
             if (user != null) {

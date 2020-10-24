@@ -66,16 +66,8 @@ namespace RaidBot.Entities {
          else {
             raidWithUsers.Append($"Leader: {Users.First().Username} {Users.First().GetGuests}");
 
-            List<User> inPersonUsers = new List<User>();
-            List<User> remoteUsers = new List<User>();
-
-            foreach (var user in Users) {
-               if (user.IsRemoteAttendee) {
-                  remoteUsers.Add(user);
-               } else {
-                  inPersonUsers.Add(user);
-               }
-            }
+            List<User> inPersonUsers = Users.Where(user => !user.IsRemoteAttendee).ToList();
+            List<User> remoteUsers = Users.Where(user => user.IsRemoteAttendee).ToList();
 
             if (inPersonUsers.Count() > 0) {
                raidWithUsers.Append($"\nIn person: {inPersonUsers.First().Username} {inPersonUsers.First().GetGuests}");

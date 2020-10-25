@@ -12,5 +12,6 @@ namespace RaidBot.Helpers {
       public EmbedBuilder ReferenceUserBuilder { get; set; }
       public EmbedBuilder RequesterUserBuilder { get; set; }
       public List<User> Users { get; set; }
+      public string Message { get; set; }
    }
 }

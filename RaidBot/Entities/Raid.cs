@@ -31,6 +31,14 @@ namespace RaidBot.Entities {
          }
       }
 
+      public int RemoteUserCount
+      {
+         get {
+            List<User> remoteUsers = Users.Where(user => user.IsRemoteAttendee).ToList();
+            return remoteUsers.Count() + remoteUsers.Sum(a => a.GuestsCount);
+         }
+      }
+
       public bool Equals(Raid item) {
          return Name.Equals(item.Name, StringComparison.CurrentCultureIgnoreCase);
       }
@@ -38,7 +46,9 @@ namespace RaidBot.Entities {
       public override string ToString() {
          string time = Time?.ToString("HH:mm");
          string day = Day?.ToString("yyyy'-'MM'-'dd");
-         string result = $"{Name} {day} {time} {RaidBossName} (Expires {ToStringExpire()}) ({UserCount} attendee{(UserCount == 1 ? "" : "s")})";
+
+         string inclRemote = RemoteUserCount > 0 ? $" incl. {RemoteUserCount} remote" : "";
+         string result = $"{Name} {day} {time} {RaidBossName} (expires {ToStringExpire()}) ({UserCount} attendee{(UserCount == 1 ? "" : "s")}{inclRemote})";
          return Regex.Replace(result, @"\s+", " "); ;
       }
 
@@ -54,13 +64,23 @@ namespace RaidBot.Entities {
             raidWithUsers.Append("No users are attending this raid");
          }
          else {
-            raidWithUsers.Append($"Leader: {Users.First().Username} {Users.First().GetGuests} | ");
+            raidWithUsers.Append($"Leader: {Users.First().Username} {Users.First().GetGuests}");
 
-            foreach (var user in Users.Skip(1)) {
-               raidWithUsers.Append($"{user.Username} {user.GetGuests} | ");
+            List<User> inPersonUsers = Users.Where(user => !user.IsRemoteAttendee).ToList();
+            List<User> remoteUsers = Users.Where(user => user.IsRemoteAttendee).ToList();
+
+            if (inPersonUsers.Count() > 0) {
+               raidWithUsers.Append($"\nIn person: {inPersonUsers.First().Username} {inPersonUsers.First().GetGuests}");
+               foreach (var user in inPersonUsers.Skip(1)) {
+                  raidWithUsers.Append($" | {user.Username} {user.GetGuests}");
+               }
             }
-
-            raidWithUsers.Length -= 2;
+            if (remoteUsers.Count() > 0) {
+               raidWithUsers.Append($"\nRemote: {remoteUsers.First().Username} {remoteUsers.First().GetGuests}");
+               foreach (var user in remoteUsers.Skip(1)) {
+                  raidWithUsers.Append($" | {user.Username} {user.GetGuests}");
+               }
+            }
          }
 
          return raidWithUsers.ToString();

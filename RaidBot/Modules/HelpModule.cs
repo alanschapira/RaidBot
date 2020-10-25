@@ -11,7 +11,7 @@ namespace RaidBot.Modules {
          _service = service;
       }
 
-      [Command("echo"), Summary("Echos a message.")]
+      [Command("echo"), Summary("Echoes a message.")]
       [Alias("say", "repeat")]
       public async Task Echo([Remainder, Summary("The text to echo")] string message) {
          var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
@@ -24,10 +24,6 @@ namespace RaidBot.Modules {
          var dmChannel = await Context.User.GetOrCreateDMChannelAsync();
 
          string prefix = "$";  /* put your chosen prefix here */
-         var builder = new EmbedBuilder() {
-            Color = new Color(114, 137, 218),
-            Description = "**These are the commands you can use:**"
-         };
 
          foreach (var module in _service.Modules.OrderByDescending(a => a.Name)) /* we are now going to loop through the modules taken from the service we initiated earlier ! */
          {
@@ -49,21 +45,23 @@ namespace RaidBot.Modules {
                }
             }
 
-            if (!string.IsNullOrWhiteSpace(description)) /* if the module wasn't empty, we go and add a field where we drop all the data into! */
-            {
-               builder.AddField(x => {
-                  x.Name = module.Name;
-                  x.Value = description;
-                  x.IsInline = false;
-               });
+            if (!string.IsNullOrWhiteSpace(description)) /* if the module wasn't empty, we go and create an embed where we drop all the data into! */
+                  {
+               var builder = new EmbedBuilder() {
+                  Color = new Color(114, 137, 218),
+                  Title = $"RaidBot Commands: {module.Name}",
+                  Description = description,
+               };
+               await dmChannel.SendMessageAsync("", false, builder.Build());
             }
          }
-         builder.AddField(x => {
-            x.Name = "RaidBot Server";
-            x.Value = "Please come visit for questions, updates and testing https://discord.gg/d4KHHq8 \nIf you would like to donate, here is a link: https://www.paypal.me/RaidBot/5";
-            x.IsInline = false;
-         });
-         await dmChannel.SendMessageAsync("", false, builder.Build()); /* then we send it to the user. */
+
+         var _builder = new EmbedBuilder() {
+            Color = new Color(114, 137, 218),
+            Title = "RaidBot Server",
+            Description = "Please come visit for questions, updates and testing https://discord.gg/d4KHHq8 \nIf you would like to donate, here is a link: https://www.paypal.me/RaidBot/5",
+         };
+         await dmChannel.SendMessageAsync("", false, _builder.Build()); /* then we send it to the user. */
       }
 
    }
